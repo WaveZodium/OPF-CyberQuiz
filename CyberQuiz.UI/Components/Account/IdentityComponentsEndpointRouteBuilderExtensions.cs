@@ -1,6 +1,6 @@
 using CyberQuiz.UI.Components.Account.Pages;
 using CyberQuiz.UI.Components.Account.Pages.Manage;
-using CyberQuiz.UI.Data;
+using CyberQuiz.Infrastructure.Data;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using System.Security.Claims;
 using System.Text.Json;
+using CyberQuiz.Infrastructure.Entities;
 
 namespace Microsoft.AspNetCore.Routing {
     internal static class IdentityComponentsEndpointRouteBuilderExtensions {

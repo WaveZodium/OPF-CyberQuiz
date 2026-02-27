@@ -1,4 +1,5 @@
-using CyberQuiz.UI.Data;
+using CyberQuiz.Infrastructure.Data;
+using CyberQuiz.Infrastructure.Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;

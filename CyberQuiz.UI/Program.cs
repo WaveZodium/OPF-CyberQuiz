@@ -1,9 +1,12 @@
+using CyberQuiz.Infrastructure.Data;//NY
+using CyberQuiz.Infrastructure.Entities;//NY
 using CyberQuiz.UI.Components;
 using CyberQuiz.UI.Components.Account;
-using CyberQuiz.UI.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+// OBS! 
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +23,17 @@ builder.Services.AddAuthentication(options => {
     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
 })
     .AddIdentityCookies();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+//OBS!ÄNDRINGAR
+//=====================================================================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.MigrationsAssembly("CyberQuiz.Infrastructure")));//NY
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => {
-    options.SignIn.RequireConfirmedAccount = true;
+    options.SignIn.RequireConfirmedAccount = false;//ändrar till false för att inte kräva bekräftelse av e-postadress vid registrering
     options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
 })
     .AddEntityFrameworkStores<ApplicationDbContext>()

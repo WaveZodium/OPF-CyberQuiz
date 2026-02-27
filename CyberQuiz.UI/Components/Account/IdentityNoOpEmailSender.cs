@@ -1,4 +1,5 @@
-using CyberQuiz.UI.Data;
+
+using CyberQuiz.Infrastructure.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 

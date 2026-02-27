@@ -16,7 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Data\" />
     <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CyberQuiz.Infrastructure\CyberQuiz.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

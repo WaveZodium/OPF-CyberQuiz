@@ -11,6 +11,8 @@ namespace CyberQuiz.Infrastructure.Entities
 
         // FK till Identity-användaren som svarade (IdentityUser.Id är normalt string)
         public string UserId { get; set; } = null!;
+        // Navigation till användaren (many UserResults -> one User)
+        public ApplicationUser User { get; set; } = null!;
 
         // FK till frågan som besvarades
         public int QuestionId { get; set; }

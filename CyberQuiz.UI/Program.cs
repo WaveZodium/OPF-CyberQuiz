@@ -1,11 +1,11 @@
 using CyberQuiz.Infrastructure.Data;//NY
+using CyberQuiz.Infrastructure.Data.Seed;//NY
 using CyberQuiz.Infrastructure.Entities;//NY
 using CyberQuiz.UI.Components;
 using CyberQuiz.UI.Components.Account;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-// OBS! 
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,5 +64,17 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+//=========OBS! NYTT IGEN=====================
+// Skapa testkontot automatiskt när appen startar, så vi alltid kan logga in vid test/demo.
+// Detta körs bara när servern startar (inte i webbläsaren).
+// Koden kollar först om användaren redan finns – annars skapas den.
+
+if (app.Environment.IsDevelopment())//Kör den här seed-koden bara när appen körs i utvecklingsläge (Development)
+{
+    using var scope = app.Services.CreateScope();//Skapar ett “tillfälligt rum” där appen kan hämta saker som ska leva kort tid
+    await IdentitySeeder.SeedRequiredUserAsync(scope.ServiceProvider);
+}
+//===========================================
 
 app.Run();

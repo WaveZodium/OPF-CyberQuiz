@@ -1,0 +1,17 @@
+﻿using CyberQuiz.Infrastructure.Entities;
+
+namespace CyberQuiz.Application.Interfaces.Repositories;
+
+public interface IUserResultRepository
+{
+    Task<UserResult?> GetByIdAsync(int id);
+    Task<List<UserResult>> GetByUserAsync(string userId);
+    Task<List<UserResult>> GetBySubCategoryAsync(string userId, int subCategoryId);
+    Task AddAsync(UserResult result);
+    Task UpdateAsync(UserResult result);
+    Task DeleteAsync(int id);
+
+    // Extra queries som behövs för progression
+    Task<int> CountCorrectAnswersAsync(string userId, int subCategoryId);
+    Task<int> CountTotalAnswersAsync(string userId, int subCategoryId);
+}

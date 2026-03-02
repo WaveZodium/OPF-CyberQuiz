@@ -10,7 +10,7 @@ namespace CyberQuiz.Infrastructure.Entities
 
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
-        public int OrderIndex { get; set; }
+        public int? OrderIndex { get; set; }
 
         // Foreign Key
         public int CategoryId { get; set; }

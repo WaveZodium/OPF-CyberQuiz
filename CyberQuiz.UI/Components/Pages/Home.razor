@@ -1,7 +1,65 @@
 ﻿@page "/"
+@using System.Net.Http.Json
+@inject IHttpClientFactory HttpClientFactory
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Quotes</h1>
 
-Welcome to your new app.
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <p class="text-danger">@errorMessage</p>
+}
+else if (quotes?.Quotes is { Count: > 0 })
+{
+    <ul>
+        @foreach (var q in quotes.Quotes)
+        {
+            <li>
+                <strong>@q.Author</strong>: @q.Quote
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No quotes found.</p>
+}
+
+@code {
+    private QuotesResponse? quotes;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            quotes = await client.GetFromJsonAsync<QuotesResponse>("https://dummyjson.com/quotes");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private sealed class QuotesResponse
+    {
+        public List<QuoteDetail> Quotes { get; set; } = [];
+    }
+
+    private sealed class QuoteDetail
+    {
+        public string Quote { get; set; } = "";
+        public string Author { get; set; } = "";
+    }
+}

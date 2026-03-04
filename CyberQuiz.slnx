@@ -3,6 +3,8 @@
   <Project Path="CyberQuiz.Application/CyberQuiz.Application.csproj" />
   <Project Path="CyberQuiz.Infrastructure/CyberQuiz.Infrastructure.csproj" />
   <Project Path="CyberQuiz.Shared/CyberQuiz.Shared.csproj" Id="8f1d154f-78f2-4840-8a3a-40c5dfe6bc72" />
-  <Project Path="CyberQuiz.Tests/CyberQuiz.Tests.csproj" />
+  <Project Path="CyberQuiz.Tests/CyberQuiz.Tests.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
   <Project Path="CyberQuiz.UI/CyberQuiz.UI.csproj" Id="fe4f4402-0242-419f-9282-242578d35d69" />
 </Solution>

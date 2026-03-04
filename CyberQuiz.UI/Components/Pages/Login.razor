@@ -1,4 +1,5 @@
 ﻿@page "/login"
+@rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @using System.Net.Http.Json
 @inject HttpClient Http
@@ -7,7 +8,7 @@
     <div class="login-card">
         <h3>Login</h3>
 
-        <EditForm Model="_model" FormName="LoginForm" OnValidSubmit="HandleLogin" OnInvalidSubmit="HandleInvalidSubmit">
+        <EditForm Model="_model" OnValidSubmit="HandleLogin" OnInvalidSubmit="HandleInvalidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
@@ -86,10 +87,25 @@
         }
     }
 
-    private void HandleInvalidSubmit()
+    private void HandleInvalidSubmit(EditContext editContext)
     {
         _statusMessage = null;
-        _errorMessage = "Please enter a username/email and a password (min 6 characters).";
+
+        var invalidFields = new List<string>();
+
+        if (editContext.GetValidationMessages(() => _model.Identifier).Any())
+        {
+            invalidFields.Add("Username/Email");
+        }
+
+        if (editContext.GetValidationMessages(() => _model.Password).Any())
+        {
+            invalidFields.Add("Password");
+        }
+
+        _errorMessage = invalidFields.Count == 0
+            ? "Please correct the highlighted fields."
+            : $"Please check: {string.Join(", ", invalidFields)}.";
     }
     
     private sealed class LoginModel

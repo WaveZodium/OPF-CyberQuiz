@@ -17,14 +17,12 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
             ? await userManager.FindByEmailAsync(request.Identifier)
             : await userManager.FindByNameAsync(request.Identifier);
 
-        if (user is null)
-        {
+        if (user is null) {
             return Unauthorized("Invalid credentials.");
         }
 
         var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
-        if (!result.Succeeded)
-        {
+        if (!result.Succeeded) {
             return Unauthorized("Invalid credentials.");
         }
 

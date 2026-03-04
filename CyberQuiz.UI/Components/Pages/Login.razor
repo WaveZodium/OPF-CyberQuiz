@@ -2,7 +2,8 @@
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @using System.Net.Http.Json
-@inject HttpClient Http
+@using CyberQuiz.UI.Services
+@inject IApiClient Api
 
 <div class="login-page">
     <div class="login-card">
@@ -50,7 +51,7 @@
 
 @code {
     private readonly LoginModel _model = new();
-    private bool _useApi = false;
+    private bool _useApi = true;
     private bool _isSubmitting;
     private string? _statusMessage;
     private string? _errorMessage;
@@ -67,7 +68,7 @@
         {
             if (_useApi)
             {
-                var response = await Http.PostAsJsonAsync("/api/login", request);
+                var response = await Api.HttpClient.PostAsJsonAsync("api/Auth/login", request);
                 response.EnsureSuccessStatusCode();
                 _statusMessage = "Logged in.";
             }
@@ -77,9 +78,9 @@
                 _statusMessage = "Logged in (simulated).";
             }
         }
-        catch
+        catch (Exception ex)
         {
-            _errorMessage = "Login failed.";
+            _errorMessage = $"Login failed: {ex.Message}";
         }
         finally
         {

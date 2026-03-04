@@ -14,13 +14,13 @@
 
             <div class="mb-3">
                 <label for="identifier" class="form-label">Username or Email</label>
-                <InputText id="identifier" class="form-control" @bind-Value="_model.Identifier" @bind-Value:event="oninput" />
+                <InputText id="identifier" class="form-control" @bind-Value="_model.Identifier" />
                 <ValidationMessage For="@(() => _model.Identifier)" />
             </div>
 
             <div class="mb-2">
                 <label for="password" class="form-label">Password</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="_model.Password" @bind-Value:event="oninput" />
+                <InputText id="password" type="password" class="form-control" @bind-Value="_model.Password" />
                 <ValidationMessage For="@(() => _model.Password)" />
             </div>
 

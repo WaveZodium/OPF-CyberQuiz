@@ -1,10 +1,10 @@
-﻿using CyberQuiz.Application.DTOs;
-using CyberQuiz.Application.Interfaces;
+﻿using CyberQuiz.Application.Interfaces;
 using CyberQuiz.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using CyberQuiz.Application.DTOs.Progress;
 
 namespace CyberQuiz.Application.Services
 {

@@ -1,4 +1,5 @@
 ﻿@page "/login"
+@rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @using System.Net.Http.Json
 @inject HttpClient Http
@@ -7,19 +8,19 @@
     <div class="login-card">
         <h3>Login</h3>
 
-        <EditForm Model="_model" FormName="LoginForm" OnValidSubmit="HandleLogin" OnInvalidSubmit="HandleInvalidSubmit">
+        <EditForm Model="_model" OnValidSubmit="HandleLogin" OnInvalidSubmit="HandleInvalidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
             <div class="mb-3">
                 <label for="identifier" class="form-label">Username or Email</label>
-                <InputText id="identifier" class="form-control" @bind-Value="_model.Identifier" />
+                <InputText id="identifier" class="form-control" @bind-Value="_model.Identifier" @bind-Value:event="oninput" />
                 <ValidationMessage For="@(() => _model.Identifier)" />
             </div>
 
             <div class="mb-2">
                 <label for="password" class="form-label">Password</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="_model.Password" />
+                <InputText id="password" type="password" class="form-control" @bind-Value="_model.Password" @bind-Value:event="oninput" />
                 <ValidationMessage For="@(() => _model.Password)" />
             </div>
 
@@ -86,10 +87,25 @@
         }
     }
 
-    private void HandleInvalidSubmit()
+    private void HandleInvalidSubmit(EditContext editContext)
     {
         _statusMessage = null;
-        _errorMessage = "Please enter a username/email and a password (min 6 characters).";
+
+        var invalidFields = new List<string>();
+
+        if (editContext.GetValidationMessages(() => _model.Identifier).Any())
+        {
+            invalidFields.Add("Username/Email");
+        }
+
+        if (editContext.GetValidationMessages(() => _model.Password).Any())
+        {
+            invalidFields.Add("Password");
+        }
+
+        _errorMessage = invalidFields.Count == 0
+            ? "Please correct the highlighted fields."
+            : $"Please check: {string.Join(", ", invalidFields)}.";
     }
     
     private sealed class LoginModel

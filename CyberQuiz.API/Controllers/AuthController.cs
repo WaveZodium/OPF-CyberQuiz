@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CyberQuiz.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+    [ApiController]
+    [Route("api/[controller]")]
 public sealed class AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
     : ControllerBase
 {
@@ -36,7 +36,7 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         var user = new ApplicationUser
-        {
+    {
             UserName = request.UserName,
             Email = request.Email
         };
@@ -53,7 +53,7 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
 
         await signInManager.SignInAsync(user, isPersistent: false);
         return Ok();
-    }
+        }
 
     [Authorize]
     [HttpPost("logout")]

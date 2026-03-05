@@ -2,9 +2,11 @@
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @using CyberQuiz.UI.Services
+@using Microsoft.AspNetCore.Authorization
 @inject IApiClient Api
 @inject IJSRuntime Js
 @inject NavigationManager Nav
+@attribute [AllowAnonymous]
 
 <div class="login-page">
     <div class="login-card">

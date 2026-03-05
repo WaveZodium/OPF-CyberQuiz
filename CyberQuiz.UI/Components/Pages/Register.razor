@@ -1,9 +1,12 @@
 ﻿@page "/register"
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
-@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Authorization
 @using CyberQuiz.UI.Services
 @inject IApiClient Api
+@inject IJSRuntime Js
+@inject NavigationManager Nav
+@attribute [AllowAnonymous]
 
 <div class="login-page">
     <div class="login-card">
@@ -25,10 +28,16 @@
                 <ValidationMessage For="@(() => _model.Email)" />
             </div>
 
-            <div class="mb-2">
+            <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <InputText id="password" type="password" class="form-control" @bind-Value="_model.Password" />
                 <ValidationMessage For="@(() => _model.Password)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="_model.ConfirmPassword" />
+                <ValidationMessage For="@(() => _model.ConfirmPassword)" />
             </div>
 
             <div class="d-flex justify-content-center gap-3">
@@ -53,7 +62,6 @@
 
 @code {
     private readonly RegisterModel _model = new();
-    private bool _useApi = true;
     private bool _isSubmitting;
     private string? _statusMessage;
     private string? _errorMessage;
@@ -65,20 +73,13 @@
         _isSubmitting = true;
 
         var request = new RegisterRequest(_model.UserName, _model.Email, _model.Password);
+        var url = new Uri(Api.HttpClient.BaseAddress!, "api/auth/register");
 
         try
         {
-            if (_useApi)
-            {
-                var response = await Api.HttpClient.PostAsJsonAsync("api/Auth/register", request);
-                response.EnsureSuccessStatusCode();
-                _statusMessage = "Registered.";
-            }
-            else
-            {
-                await Task.Delay(350);
-                _statusMessage = "Registered (simulated).";
-            }
+            await Js.InvokeAsync<bool>("cyberQuizAuth.postJson", url.ToString(), request);
+            _statusMessage = "Registered.";
+            Nav.NavigateTo("/categories", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -111,6 +112,11 @@
             invalidFields.Add("Password");
         }
 
+        if (editContext.GetValidationMessages(() => _model.ConfirmPassword).Any())
+        {
+            invalidFields.Add("Confirm Password");
+        }
+
         _errorMessage = invalidFields.Count == 0
             ? "Please correct the highlighted fields."
             : $"Please check: {string.Join(", ", invalidFields)}.";
@@ -127,6 +133,9 @@
 
         [Required, MinLength(6)]
         public string Password { get; set; } = string.Empty;
+
+        [Required, Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 
     private sealed record RegisterRequest(string UserName, string Email, string Password);

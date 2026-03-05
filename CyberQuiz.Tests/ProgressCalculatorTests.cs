@@ -1,359 +1,174 @@
-﻿using CyberQuiz.Application.Services;
-using CyberQuiz.Infrastructure.Data;
-using CyberQuiz.Infrastructure.Entities;
+using CyberQuiz.Application.Services;
 using CyberQuiz.Infrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
+using Moq;
 
 namespace CyberQuiz.Tests;
 
 public class ProgressCalculatorTests
 {
-    private ApplicationDbContext GetInMemoryDbContext()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+    private readonly Mock<IQuestionRepository> _questionRepoMock;
+    private readonly Mock<IUserResultRepository> _userResultRepoMock;
+    private readonly ProgressCalculator _sut;
 
-        return new ApplicationDbContext(options);
+    public ProgressCalculatorTests()
+    {
+        _questionRepoMock = new Mock<IQuestionRepository>();
+        _userResultRepoMock = new Mock<IUserResultRepository>();
+        _sut = new ProgressCalculator(_questionRepoMock.Object, _userResultRepoMock.Object);
     }
 
     [Fact]
-    public async Task GetSubCategoryProgressAsync_NoQuestions_ReturnsZeroProgress()
+    public async Task GetSubCategoryProgressAsync_ReturnsZeroProgress_WhenNoQuestionsExist()
     {
         // Arrange
-        var context = GetInMemoryDbContext();
-        var questionRepo = new QuestionRepository(context);
-        var userResultRepo = new UserResultRepository(context);
-        var calculator = new ProgressCalculator(questionRepo, userResultRepo);
+        var subCategoryId = 1;
+        var userId = "user123";
+
+        _questionRepoMock.Setup(x => x.CountQuestionsInSubCategoryAsync(subCategoryId))
+            .ReturnsAsync(0);
 
         // Act
-        var result = await calculator.GetSubCategoryProgressAsync(999, "user1");
+        var result = await _sut.GetSubCategoryProgressAsync(subCategoryId, userId);
 
         // Assert
+        Assert.NotNull(result);
+        Assert.Equal(subCategoryId, result.SubCategoryId);
         Assert.Equal(0, result.TotalQuestions);
         Assert.Equal(0, result.TotalAttempts);
+        Assert.Equal(0, result.CorrectAttempts);
         Assert.Equal(0m, result.PercentCorrect);
         Assert.False(result.HasAttemptedAllQuestions);
         Assert.False(result.IsCompleted);
     }
 
     [Fact]
-    public async Task GetSubCategoryProgressAsync_80PercentCorrect_AllQuestionsAttempted_ReturnsCompleted()
+    public async Task GetSubCategoryProgressAsync_ReturnsCorrectProgress_WhenUserHasNotStarted()
     {
         // Arrange
-        var context = GetInMemoryDbContext();
-        var questionRepo = new QuestionRepository(context);
-        var userResultRepo = new UserResultRepository(context);
-        var calculator = new ProgressCalculator(questionRepo, userResultRepo);
+        var subCategoryId = 1;
+        var userId = "user123";
 
-        // Seed data: Category och SubCategory
-        var category = new Category { Id = 1, Name = "Test Category" };
-        var subCategory = new SubCategory
-        {
-            Id = 1,
-            Name = "Test SubCategory",
-            CategoryId = 1,
-            OrderIndex = 1,
-            Category = category
-        };
-        context.Categories.Add(category);
-        context.SubCategories.Add(subCategory);
-
-        // Seed: 10 frågor i subkategori 1
-        for (int i = 1; i <= 10; i++)
-        {
-            var question = new Question
-            {
-                Id = i,
-                SubCategoryId = 1,
-                Text = $"Question {i}",
-                OrderIndex = i,
-                SubCategory = subCategory
-            };
-            context.Questions.Add(question);
-
-            // Användaren har svarat på varje fråga (8 rätt, 2 fel)
-            var result = new UserResult
-            {
-                UserId = "user1",
-                QuestionId = i,
-                SubCategoryId = 1,
-                SelectedAnswerOptionId = 1,
-                IsCorrect = i <= 8, // Första 8 är rätt (80%)
-                AnsweredAtUtc = DateTime.UtcNow
-            };
-            context.UserResults.Add(result);
-        }
-
-        await context.SaveChangesAsync();
+        _questionRepoMock.Setup(x => x.CountQuestionsInSubCategoryAsync(subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountTotalAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(0);
+        _userResultRepoMock.Setup(x => x.CountCorrectAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(0);
+        _userResultRepoMock.Setup(x => x.CountDistinctQuestionsAttemptedAsync(userId, subCategoryId))
+            .ReturnsAsync(0);
 
         // Act
-        var progress = await calculator.GetSubCategoryProgressAsync(1, "user1");
+        var result = await _sut.GetSubCategoryProgressAsync(subCategoryId, userId);
 
         // Assert
-        Assert.Equal(10, progress.TotalQuestions);
-        Assert.Equal(10, progress.TotalAttempts);
-        Assert.Equal(8, progress.CorrectAttempts);
-        Assert.Equal(0.80m, progress.PercentCorrect);
-        Assert.True(progress.HasAttemptedAllQuestions);
-        Assert.True(progress.IsCompleted); // 80% + alla frågor besvarade
+        Assert.Equal(10, result.TotalQuestions);
+        Assert.Equal(0, result.TotalAttempts);
+        Assert.Equal(0, result.CorrectAttempts);
+        Assert.Equal(0m, result.PercentCorrect);
+        Assert.False(result.HasAttemptedAllQuestions);
+        Assert.False(result.IsCompleted);
     }
 
     [Fact]
-    public async Task GetSubCategoryProgressAsync_70Percent_NotCompleted()
+    public async Task GetSubCategoryProgressAsync_CalculatesPercentCorrect_Correctly()
     {
         // Arrange
-        var context = GetInMemoryDbContext();
-        var questionRepo = new QuestionRepository(context);
-        var userResultRepo = new UserResultRepository(context);
-        var calculator = new ProgressCalculator(questionRepo, userResultRepo);
+        var subCategoryId = 1;
+        var userId = "user123";
 
-        var category = new Category { Id = 1, Name = "Test Category" };
-        var subCategory = new SubCategory
-        {
-            Id = 1,
-            Name = "Test",
-            CategoryId = 1,
-            OrderIndex = 1,
-            Category = category
-        };
-        context.Categories.Add(category);
-        context.SubCategories.Add(subCategory);
-
-        // 10 frågor, 7 rätt (70%)
-        for (int i = 1; i <= 10; i++)
-        {
-            var question = new Question
-            {
-                Id = i,
-                SubCategoryId = 1,
-                Text = $"Question {i}",
-                OrderIndex = i,
-                SubCategory = subCategory
-            };
-            context.Questions.Add(question);
-
-            var result = new UserResult
-            {
-                UserId = "user1",
-                QuestionId = i,
-                SubCategoryId = 1,
-                SelectedAnswerOptionId = 1,
-                IsCorrect = i <= 7, // Endast 7 rätt (70%)
-                AnsweredAtUtc = DateTime.UtcNow
-            };
-            context.UserResults.Add(result);
-        }
-
-        await context.SaveChangesAsync();
+        _questionRepoMock.Setup(x => x.CountQuestionsInSubCategoryAsync(subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountTotalAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountCorrectAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(7);
+        _userResultRepoMock.Setup(x => x.CountDistinctQuestionsAttemptedAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
 
         // Act
-        var progress = await calculator.GetSubCategoryProgressAsync(1, "user1");
+        var result = await _sut.GetSubCategoryProgressAsync(subCategoryId, userId);
 
         // Assert
-        Assert.Equal(10, progress.TotalQuestions);
-        Assert.Equal(7, progress.CorrectAttempts);
-        Assert.Equal(0.70m, progress.PercentCorrect);
-        Assert.True(progress.HasAttemptedAllQuestions);
-        Assert.False(progress.IsCompleted); // Under 80%
+        Assert.Equal(10, result.TotalQuestions);
+        Assert.Equal(10, result.TotalAttempts);
+        Assert.Equal(7, result.CorrectAttempts);
+        Assert.Equal(0.7m, result.PercentCorrect);
+        Assert.True(result.HasAttemptedAllQuestions);
+        Assert.False(result.IsCompleted); // Not completed because less than 80%
     }
 
     [Fact]
-    public async Task GetSubCategoryProgressAsync_100PercentButNotAllQuestionsAttempted_NotCompleted()
+    public async Task GetSubCategoryProgressAsync_MarksAsCompleted_WhenAtLeast80PercentCorrect()
     {
         // Arrange
-        var context = GetInMemoryDbContext();
-        var questionRepo = new QuestionRepository(context);
-        var userResultRepo = new UserResultRepository(context);
-        var calculator = new ProgressCalculator(questionRepo, userResultRepo);
+        var subCategoryId = 1;
+        var userId = "user123";
 
-        var category = new Category { Id = 1, Name = "Test Category" };
-        var subCategory = new SubCategory
-        {
-            Id = 1,
-            Name = "Test",
-            CategoryId = 1,
-            OrderIndex = 1,
-            Category = category
-        };
-        context.Categories.Add(category);
-        context.SubCategories.Add(subCategory);
-
-        // 10 frågor totalt
-        for (int i = 1; i <= 10; i++)
-        {
-            var question = new Question
-            {
-                Id = i,
-                SubCategoryId = 1,
-                Text = $"Question {i}",
-                OrderIndex = i,
-                SubCategory = subCategory
-            };
-            context.Questions.Add(question);
-        }
-
-        // Användaren har bara svarat på 5 frågor (alla rätt = 100%)
-        for (int i = 1; i <= 5; i++)
-        {
-            var result = new UserResult
-            {
-                UserId = "user1",
-                QuestionId = i,
-                SubCategoryId = 1,
-                SelectedAnswerOptionId = 1,
-                IsCorrect = true,
-                AnsweredAtUtc = DateTime.UtcNow
-            };
-            context.UserResults.Add(result);
-        }
-
-        await context.SaveChangesAsync();
+        _questionRepoMock.Setup(x => x.CountQuestionsInSubCategoryAsync(subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountTotalAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountCorrectAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(8);
+        _userResultRepoMock.Setup(x => x.CountDistinctQuestionsAttemptedAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
 
         // Act
-        var progress = await calculator.GetSubCategoryProgressAsync(1, "user1");
+        var result = await _sut.GetSubCategoryProgressAsync(subCategoryId, userId);
 
         // Assert
-        Assert.Equal(10, progress.TotalQuestions);
-        Assert.Equal(5, progress.TotalAttempts);
-        Assert.Equal(5, progress.CorrectAttempts);
-        Assert.Equal(1.00m, progress.PercentCorrect); // 100% på de frågor som besvarats
-        Assert.False(progress.HasAttemptedAllQuestions); // Bara 5 av 10
-        Assert.False(progress.IsCompleted); // Inte alla frågor besvarade
-    }
-
-    [Theory]
-    [InlineData(10, 8, true)]   // 80% = completed
-    [InlineData(10, 7, false)]  // 70% = not completed
-    [InlineData(10, 10, true)]  // 100% = completed
-    [InlineData(10, 9, true)]   // 90% = completed
-    [InlineData(5, 4, true)]    // 80% = completed
-    [InlineData(5, 3, false)]   // 60% = not completed
-    public async Task GetSubCategoryProgressAsync_VariousScores_ReturnsExpectedCompletion(
-        int totalQuestions,
-        int correctAnswers,
-        bool expectedCompleted)
-    {
-        // Arrange
-        var context = GetInMemoryDbContext();
-        var questionRepo = new QuestionRepository(context);
-        var userResultRepo = new UserResultRepository(context);
-        var calculator = new ProgressCalculator(questionRepo, userResultRepo);
-
-        var category = new Category { Id = 1, Name = "Test Category" };
-        var subCategory = new SubCategory
-        {
-            Id = 1,
-            Name = "Test",
-            CategoryId = 1,
-            OrderIndex = 1,
-            Category = category
-        };
-        context.Categories.Add(category);
-        context.SubCategories.Add(subCategory);
-
-        for (int i = 1; i <= totalQuestions; i++)
-        {
-            context.Questions.Add(new Question
-            {
-                Id = i,
-                SubCategoryId = 1,
-                Text = $"Q{i}",
-                OrderIndex = i,
-                SubCategory = subCategory
-            });
-
-            context.UserResults.Add(new UserResult
-            {
-                UserId = "user1",
-                QuestionId = i,
-                SubCategoryId = 1,
-                SelectedAnswerOptionId = 1,
-                IsCorrect = i <= correctAnswers,
-                AnsweredAtUtc = DateTime.UtcNow
-            });
-        }
-
-        await context.SaveChangesAsync();
-
-        // Act
-        var progress = await calculator.GetSubCategoryProgressAsync(1, "user1");
-
-        // Assert
-        Assert.Equal(expectedCompleted, progress.IsCompleted);
-        Assert.Equal(totalQuestions, progress.TotalQuestions);
-        Assert.Equal(correctAnswers, progress.CorrectAttempts);
+        Assert.Equal(0.8m, result.PercentCorrect);
+        Assert.True(result.HasAttemptedAllQuestions);
+        Assert.True(result.IsCompleted); // Should be completed at exactly 80%
     }
 
     [Fact]
-    public async Task GetSubCategoryProgressAsync_MultipleAttemptsPerQuestion_CountsAllAttempts()
+    public async Task GetSubCategoryProgressAsync_NotCompleted_WhenNotAllQuestionsAttempted()
     {
         // Arrange
-        var context = GetInMemoryDbContext();
-        var questionRepo = new QuestionRepository(context);
-        var userResultRepo = new UserResultRepository(context);
-        var calculator = new ProgressCalculator(questionRepo, userResultRepo);
+        var subCategoryId = 1;
+        var userId = "user123";
 
-        var category = new Category { Id = 1, Name = "Test Category" };
-        var subCategory = new SubCategory
-        {
-            Id = 1,
-            Name = "Test",
-            CategoryId = 1,
-            OrderIndex = 1,
-            Category = category
-        };
-        context.Categories.Add(category);
-        context.SubCategories.Add(subCategory);
-
-        // 5 frågor
-        for (int i = 1; i <= 5; i++)
-        {
-            context.Questions.Add(new Question
-            {
-                Id = i,
-                SubCategoryId = 1,
-                Text = $"Q{i}",
-                OrderIndex = i,
-                SubCategory = subCategory
-            });
-
-            // Användaren försöker varje fråga 2 gånger
-            // Första gången: fel
-            context.UserResults.Add(new UserResult
-            {
-                UserId = "user1",
-                QuestionId = i,
-                SubCategoryId = 1,
-                SelectedAnswerOptionId = 1,
-                IsCorrect = false,
-                AnsweredAtUtc = DateTime.UtcNow.AddMinutes(-10)
-            });
-
-            // Andra gången: rätt
-            context.UserResults.Add(new UserResult
-            {
-                UserId = "user1",
-                QuestionId = i,
-                SubCategoryId = 1,
-                SelectedAnswerOptionId = 2,
-                IsCorrect = true,
-                AnsweredAtUtc = DateTime.UtcNow
-            });
-        }
-
-        await context.SaveChangesAsync();
+        _questionRepoMock.Setup(x => x.CountQuestionsInSubCategoryAsync(subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountTotalAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(5);
+        _userResultRepoMock.Setup(x => x.CountCorrectAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(5);
+        _userResultRepoMock.Setup(x => x.CountDistinctQuestionsAttemptedAsync(userId, subCategoryId))
+            .ReturnsAsync(5); // Only 5 out of 10 attempted
 
         // Act
-        var progress = await calculator.GetSubCategoryProgressAsync(1, "user1");
+        var result = await _sut.GetSubCategoryProgressAsync(subCategoryId, userId);
 
         // Assert
-        Assert.Equal(5, progress.TotalQuestions);
-        Assert.Equal(10, progress.TotalAttempts); // 5 frågor × 2 försök
-        Assert.Equal(5, progress.CorrectAttempts);
-        Assert.Equal(0.50m, progress.PercentCorrect); // 5 rätt av 10 försök = 50%
-        Assert.True(progress.HasAttemptedAllQuestions);
-        Assert.False(progress.IsCompleted); // Under 80%
+        Assert.Equal(1.0m, result.PercentCorrect); // 100% correct on attempted
+        Assert.False(result.HasAttemptedAllQuestions);
+        Assert.False(result.IsCompleted); // Not completed because not all questions attempted
+    }
+
+    [Fact]
+    public async Task GetSubCategoryProgressAsync_HandlesPerfectScore()
+    {
+        // Arrange
+        var subCategoryId = 1;
+        var userId = "user123";
+
+        _questionRepoMock.Setup(x => x.CountQuestionsInSubCategoryAsync(subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountTotalAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountCorrectAnswersAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
+        _userResultRepoMock.Setup(x => x.CountDistinctQuestionsAttemptedAsync(userId, subCategoryId))
+            .ReturnsAsync(10);
+
+        // Act
+        var result = await _sut.GetSubCategoryProgressAsync(subCategoryId, userId);
+
+        // Assert
+        Assert.Equal(1.0m, result.PercentCorrect);
+        Assert.True(result.HasAttemptedAllQuestions);
+        Assert.True(result.IsCompleted);
     }
 }

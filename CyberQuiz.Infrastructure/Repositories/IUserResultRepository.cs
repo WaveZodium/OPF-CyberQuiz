@@ -14,4 +14,5 @@ public interface IUserResultRepository
     // Extra queries som behövs för progression
     Task<int> CountCorrectAnswersAsync(string userId, int subCategoryId);
     Task<int> CountTotalAnswersAsync(string userId, int subCategoryId);
+    Task<int> CountDistinctQuestionsAttemptedAsync(string userId, int subCategoryId);
 }

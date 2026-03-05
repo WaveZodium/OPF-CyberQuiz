@@ -74,4 +74,13 @@ public class UserResultRepository : IUserResultRepository
                         r.SubCategoryId == subCategoryId)
             .CountAsync();
     }
+
+    public Task<int> CountDistinctQuestionsAttemptedAsync(string userId, int subCategoryId)
+    {
+        return _context.UserResults
+            .Where(r => r.UserId == userId && r.SubCategoryId == subCategoryId)
+            .Select(r => r.QuestionId)
+            .Distinct()
+            .CountAsync();
+    }
 }

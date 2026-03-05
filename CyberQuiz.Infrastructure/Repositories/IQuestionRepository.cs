@@ -12,5 +12,6 @@ namespace CyberQuiz.Infrastructure.Repositories
         Task AddAsync(Question question);
         Task UpdateAsync(Question question);
         Task DeleteAsync(int id);
+        Task<int> CountQuestionsInSubCategoryAsync(int subCategoryId);
     }
 }

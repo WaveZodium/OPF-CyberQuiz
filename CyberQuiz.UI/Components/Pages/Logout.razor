@@ -1,0 +1,33 @@
+@page "/logout"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using CyberQuiz.UI.Services
+@inject IApiClient Api
+@inject IJSRuntime Js
+@inject NavigationManager Nav
+@attribute [AllowAnonymous]
+
+<p>Logging out...</p>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var url = new Uri(Api.HttpClient.BaseAddress!, "api/auth/logout");
+
+        try
+        {
+            await Js.InvokeAsync<bool>("cyberQuizAuth.postJson", url.ToString(), null);
+        }
+        catch
+        {
+            // Ignore errors here to keep logout flow robust.
+        }
+
+        Nav.NavigateTo("/login", forceLoad: true);
+    }
+}

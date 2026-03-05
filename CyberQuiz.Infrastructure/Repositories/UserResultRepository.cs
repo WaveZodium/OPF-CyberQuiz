@@ -1,5 +1,4 @@
-﻿using CyberQuiz.Application.Interfaces.Repositories;
-using CyberQuiz.Infrastructure.Data;
+﻿using CyberQuiz.Infrastructure.Data;
 using CyberQuiz.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -73,6 +72,15 @@ public class UserResultRepository : IUserResultRepository
         return await _context.UserResults
             .Where(r => r.UserId == userId &&
                         r.SubCategoryId == subCategoryId)
+            .CountAsync();
+    }
+
+    public Task<int> CountDistinctQuestionsAttemptedAsync(string userId, int subCategoryId)
+    {
+        return _context.UserResults
+            .Where(r => r.UserId == userId && r.SubCategoryId == subCategoryId)
+            .Select(r => r.QuestionId)
+            .Distinct()
             .CountAsync();
     }
 }

@@ -1,9 +1,9 @@
-﻿using CyberQuiz.Application.DTOs.Progress;
+﻿using CyberQuiz.Shared.DTOs.Progress;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CyberQuiz.Application.DTOs.Quiz
+namespace CyberQuiz.Shared.DTOs.Quiz
 {
     public class SubmitAnswerResponseDto
     {

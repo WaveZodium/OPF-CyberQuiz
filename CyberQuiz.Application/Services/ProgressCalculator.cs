@@ -1,27 +1,28 @@
 ﻿using CyberQuiz.Application.Interfaces;
 using CyberQuiz.Infrastructure.Data;
+using CyberQuiz.Infrastructure.Repositories;
+using CyberQuiz.Shared.DTOs.Progress;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using CyberQuiz.Application.DTOs.Progress;
 
 namespace CyberQuiz.Application.Services
 {
     public class ProgressCalculator : IProgressCalculator
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IQuestionRepository _questionRepo;
+        private readonly IUserResultRepository _userResultRepo;
 
-        public ProgressCalculator(ApplicationDbContext db)
+        public ProgressCalculator(IQuestionRepository questionRepo, IUserResultRepository userResultRepo)
         {
-            _db = db;
+            _questionRepo = questionRepo;
+            _userResultRepo = userResultRepo;
         }
 
         public async Task<SubCategoryProgressDto> GetSubCategoryProgressAsync(int subCategoryId, string userId)
         {
-            int totalQuestions = await _db.Questions
-                .Where(q => q.SubCategoryId == subCategoryId)
-                .CountAsync();
+            int totalQuestions = await _questionRepo.CountQuestionsInSubCategoryAsync(subCategoryId);
 
             if (totalQuestions == 0)
             {
@@ -37,16 +38,9 @@ namespace CyberQuiz.Application.Services
                 };
             }
 
-            var resultsQuery = _db.UserResults
-                .Where(r => r.UserId == userId && r.SubCategoryId == subCategoryId);
-
-            int totalAttempts = await resultsQuery.CountAsync();
-            int correctAttempts = await resultsQuery.CountAsync(r => r.IsCorrect);
-
-            int attemptedDistinctQuestions = await resultsQuery
-                .Select(r => r.QuestionId)
-                .Distinct()
-                .CountAsync();
+            int totalAttempts = await _userResultRepo.CountTotalAnswersAsync(userId, subCategoryId);
+            int correctAttempts = await _userResultRepo.CountCorrectAnswersAsync(userId, subCategoryId);
+            int attemptedDistinctQuestions = await _userResultRepo.CountDistinctQuestionsAttemptedAsync(userId, subCategoryId);
 
             bool hasAttemptedAllQuestions = attemptedDistinctQuestions >= totalQuestions;
 
@@ -67,5 +61,8 @@ namespace CyberQuiz.Application.Services
                 IsCompleted = isCompleted
             };
         }
+
+
+
     }
 }

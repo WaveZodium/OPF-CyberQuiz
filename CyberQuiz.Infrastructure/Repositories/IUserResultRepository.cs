@@ -1,6 +1,6 @@
 ﻿using CyberQuiz.Infrastructure.Entities;
 
-namespace CyberQuiz.Application.Interfaces.Repositories;
+namespace CyberQuiz.Infrastructure.Repositories;
 
 public interface IUserResultRepository
 {
@@ -14,4 +14,5 @@ public interface IUserResultRepository
     // Extra queries som behövs för progression
     Task<int> CountCorrectAnswersAsync(string userId, int subCategoryId);
     Task<int> CountTotalAnswersAsync(string userId, int subCategoryId);
+    Task<int> CountDistinctQuestionsAttemptedAsync(string userId, int subCategoryId);
 }

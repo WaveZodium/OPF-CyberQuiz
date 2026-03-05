@@ -1,7 +1,10 @@
+using CyberQuiz.Application.Interfaces;
+using CyberQuiz.Application.Services;
 using CyberQuiz.Infrastructure.Data;
 using CyberQuiz.Infrastructure.Data.Seed;
 using CyberQuiz.Infrastructure.Entities;
 using Microsoft.AspNetCore.DataProtection;
+using CyberQuiz.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,19 +55,27 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register Repositories
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
+builder.Services.AddScoped<IUserResultRepository, UserResultRepository>();
+
+// Register Services
+builder.Services.AddScoped<IProgressCalculator, ProgressCalculator>();
+// builder.Services.AddScoped<IQuizService, QuizService>();
+// builder.Services.AddScoped<IAnswerService, AnswerService>();
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowUI", policy =>
     {
-        policy.WithOrigins("https://localhost:7073") // UI-porten https
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-        policy.WithOrigins("https://localhost:5004") // UI-porten
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins("https://localhost:7073", "https://localhost:5004")
+             .AllowAnyHeader()
+             .AllowAnyMethod()
+             .AllowCredentials();
     });
 });
 

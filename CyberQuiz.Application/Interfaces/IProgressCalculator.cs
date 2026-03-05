@@ -1,4 +1,4 @@
-﻿using CyberQuiz.Application.DTOs.Progress;
+﻿using CyberQuiz.Shared.DTOs.Progress;
 using System;
 using System.Collections.Generic;
 using System.Text;

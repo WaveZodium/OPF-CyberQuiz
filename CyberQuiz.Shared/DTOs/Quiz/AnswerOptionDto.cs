@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CyberQuiz.Application.DTOs.Quiz
+namespace CyberQuiz.Shared.DTOs.Quiz
 {
     public class AnswerOptionDto
     {

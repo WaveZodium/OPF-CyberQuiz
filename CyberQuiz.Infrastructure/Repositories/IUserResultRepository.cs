@@ -1,6 +1,6 @@
 ﻿using CyberQuiz.Infrastructure.Entities;
 
-namespace CyberQuiz.Application.Interfaces.Repositories;
+namespace CyberQuiz.Infrastructure.Repositories;
 
 public interface IUserResultRepository
 {

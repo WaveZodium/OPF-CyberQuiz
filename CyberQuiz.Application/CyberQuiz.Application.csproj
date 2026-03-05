@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CyberQuiz.Infrastructure\CyberQuiz.Infrastructure.csproj" />
+    <ProjectReference Include="..\CyberQuiz.Shared\CyberQuiz.Shared.csproj" />
   </ItemGroup>
 
 </Project>

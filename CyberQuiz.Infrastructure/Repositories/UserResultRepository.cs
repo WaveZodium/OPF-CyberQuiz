@@ -1,5 +1,4 @@
-﻿using CyberQuiz.Application.Interfaces.Repositories;
-using CyberQuiz.Infrastructure.Data;
+﻿using CyberQuiz.Infrastructure.Data;
 using CyberQuiz.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 

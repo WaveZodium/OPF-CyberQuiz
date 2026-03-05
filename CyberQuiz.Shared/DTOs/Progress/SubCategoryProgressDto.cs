@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CyberQuiz.Application.DTOs.Progress
+namespace CyberQuiz.Shared.DTOs.Progress
 {
     public class SubCategoryProgressDto
     {

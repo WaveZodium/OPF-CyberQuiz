@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CyberQuiz.Application.DTOs.Catalog
+namespace CyberQuiz.Shared.DTOs.Catalog
 {
     public class CategoryDto
     {

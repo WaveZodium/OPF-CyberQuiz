@@ -49,4 +49,11 @@ public class QuestionRepository : IQuestionRepository
         _context.Questions.Remove(entity);
         await _context.SaveChangesAsync();
     }
+
+    public Task<int> CountQuestionsInSubCategoryAsync(int subCategoryId)
+    {
+        return _context.Questions
+            .Where(q => q.SubCategoryId == subCategoryId)
+            .CountAsync();
+    }
 }

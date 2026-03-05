@@ -37,7 +37,7 @@ namespace CyberQuiz.Application.Services
         public async Task<List<CategoryDto>> GetCategoriesForUserAsync(string userId)
         {
             // Get all categories and their subcategories
-            var categories = await _categoryRepo.GetAllAsync();
+            var categories = await _categoryRepo.GetAllCategoriesWithSubCategoriesAsync();
 
             // Creates the list of CategoryDto to return
             var result = new List<CategoryDto>();
@@ -63,6 +63,7 @@ namespace CyberQuiz.Application.Services
                     {
                         Id = sub.Id,
                         Name = sub.Name,
+                        OrderIndex = sub.OrderIndex,
                         IsLocked = isLocked,
                         IsCompleted = progress.IsCompleted,
                         PercentCorrect = progress.PercentCorrect,
@@ -132,8 +133,7 @@ namespace CyberQuiz.Application.Services
             var allOptions = await _answerRepo.GetByQuestionIdAsync(dto.QuestionId); // Get all answer options for the question to find the correct one
 
             var correctOption = allOptions.FirstOrDefault(o => o.IsCorrect); // Find the correct answer option among all options for the question
-            if (correctOption is null)
-                correctAnswerOptionId = correctOption?.Id; // If the correct option is found, set the correct answer option id to its id, otherwise it remains null
+            correctAnswerOptionId = correctOption?.Id; // If the correct option is found, set the correct answer option id to its id, otherwise it remains null
 
             var userResult = new UserResult
             {

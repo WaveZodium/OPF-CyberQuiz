@@ -20,12 +20,21 @@
         </div>
 
         <AuthorizeView>
-            <Authorized>
+            <Authorized Context="authState">
+                <div class="nav-item px-3">
+                    <span class="nav-link">Hej @authState.User.Identity?.Name</span>
+                </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="categories">
                         <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Categories
                     </NavLink>
                 </div>
+                @if (authState.User.IsInRole("Admin"))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin">Admin</NavLink>
+                    </div>
+                }
                 <div class="nav-item px-3">
                     <button class="btn btn-link nav-link" @onclick="LogoutAsync">
                         <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Logout

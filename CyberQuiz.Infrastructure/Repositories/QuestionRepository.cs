@@ -24,6 +24,7 @@ public class QuestionRepository : IQuestionRepository
     {
         return await _context.Questions
             .Where(q => q.SubCategoryId == subCategoryId)
+            .OrderBy(q => q.OrderIndex)
             .AsNoTracking()
             .ToListAsync();
     }

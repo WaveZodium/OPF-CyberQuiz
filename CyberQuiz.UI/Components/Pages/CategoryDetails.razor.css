@@ -1,0 +1,18 @@
+.category-details-page {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.subcategory-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.subcategory-card.is-locked {
+    opacity: 0.75;
+}
+
+.subcategory-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}

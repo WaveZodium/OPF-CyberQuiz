@@ -83,4 +83,13 @@ public class UserResultRepository : IUserResultRepository
             .Distinct()
             .CountAsync();
     }
+
+    public async Task<List<int>> GetAnsweredQuestionIdsAsync(string userId, int subCategoryId)
+    {
+        return await _context.UserResults
+            .Where(r => r.UserId == userId && r.SubCategoryId == subCategoryId)
+            .Select(r => r.QuestionId)
+            .Distinct()
+            .ToListAsync();
+    }
 }

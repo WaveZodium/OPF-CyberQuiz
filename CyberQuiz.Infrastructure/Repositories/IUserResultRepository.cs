@@ -15,4 +15,5 @@ public interface IUserResultRepository
     Task<int> CountCorrectAnswersAsync(string userId, int subCategoryId);
     Task<int> CountTotalAnswersAsync(string userId, int subCategoryId);
     Task<int> CountDistinctQuestionsAttemptedAsync(string userId, int subCategoryId);
+    Task<List<int>> GetAnsweredQuestionIdsAsync(string userId, int subCategoryId);
 }

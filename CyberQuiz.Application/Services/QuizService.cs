@@ -95,7 +95,15 @@ namespace CyberQuiz.Application.Services
             if (questions is null || questions.Count == 0)
                 return null; // No questions available for the subcategory
 
-            var nextQuestion = questions[0]; // Get the first question as the next one
+            // Get the list of question ids that the user has already answered for the subcategory
+            var answeredQuestionIds = await _userResultRepo.GetAnsweredQuestionIdsAsync(userId, subCategoryId);
+
+            // Find the first question that the user has not answered yet
+            var nextQuestion = questions.FirstOrDefault(q => !answeredQuestionIds.Contains(q.Id));
+
+            if (nextQuestion is null)
+                return null;
+
             var options = await _answerRepo.GetByQuestionIdAsync(nextQuestion.Id); // Get answer options for the question
 
             return new QuestionDto

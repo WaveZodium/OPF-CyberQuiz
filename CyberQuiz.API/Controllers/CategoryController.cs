@@ -7,23 +7,24 @@ using System.Security.Claims;
 namespace CyberQuiz.API.Controllers;
 
 [ApiController]
-[Route("api/catalog")]
+[Route("api/categories")]
 [Authorize]
-public class CatalogController : ControllerBase
+public class CategoryController : ControllerBase
 {
     private readonly IQuizService _quizService;
 
-    public CatalogController(IQuizService quizService)
+    public CategoryController(IQuizService quizService)
     {
         _quizService = quizService;
     }
 
-    // GET /api/catalog/categories
-    [HttpGet("categories")]
+    // GET /api/categories
+    [HttpGet]
     public async Task<ActionResult<List<CategoryDto>>> GetCategories()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
 
         var result = await _quizService.GetCategoriesForUserAsync(userId);
         return Ok(result);

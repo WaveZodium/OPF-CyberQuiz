@@ -20,8 +20,9 @@ namespace CyberQuiz.API.Controllers
         [HttpGet("subcategories/{subCategoryId:int}")]
         public async Task<ActionResult<SubCategoryProgressDto>> GetSubCategoryProgress(int subCategoryId)
         {
-            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if(userId == null) return Unauthorized();
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
             var result = await _progressCalculator.GetSubCategoryProgressAsync(subCategoryId, userId);
             return Ok(result);
         }        

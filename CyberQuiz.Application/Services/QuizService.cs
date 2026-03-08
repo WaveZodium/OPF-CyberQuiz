@@ -92,10 +92,23 @@ namespace CyberQuiz.Application.Services
             // Get all questions for the subcategory
             var questions = await _questionRepo.GetBySubCategoryAsync(subCategoryId);
 
-            if (questions is null || questions.Count == 0)
-                return null; // No questions available for the subcategory
+            // If repository returns null, technical error
+            if (questions is null)
+                throw new NotFoundException($"Subcategory {subCategoryId} not found.");
 
-            var nextQuestion = questions[0]; // Get the first question as the next one
+            // If no questions exist in database for this subcategory
+            if (questions.Count == 0)
+                throw new ValidationException($"No questions available for subcategory {subCategoryId}.");
+
+            // Get the list of question ids that the user has already answered for the subcategory
+            var answeredQuestionIds = await _userResultRepo.GetAnsweredQuestionIdsAsync(userId, subCategoryId);
+
+            // Find the first question that the user has not answered yet
+            var nextQuestion = questions.FirstOrDefault(q => !answeredQuestionIds.Contains(q.Id));
+
+            if (nextQuestion is null)
+                return null;
+
             var options = await _answerRepo.GetByQuestionIdAsync(nextQuestion.Id); // Get answer options for the question
 
             return new QuestionDto
@@ -143,18 +156,21 @@ namespace CyberQuiz.Application.Services
                 SelectedAnswerOptionId = dto.SelectedAnswerOptionId,
                 IsCorrect = isCorrect,
                 AnsweredAtUtc = DateTime.UtcNow
-
             };
 
             await _userResultRepo.AddAsync(userResult); // Save the user's answer result to the database
 
             var progress = await _progress.GetSubCategoryProgressAsync(dto.SubCategoryId, userId); // Calculate the user's progress in the subcategory
 
+            // Get the next question after submitting the answer
+            var nextQuestion = await GetNextQuestionAsync(dto.SubCategoryId, userId);
+
             return new SubmitAnswerResponseDto
             {
                 IsCorrect = isCorrect,
                 CorrectAnswerOptionId = correctAnswerOptionId,
-                Progress = progress
+                Progress = progress,
+                NextQuestion = nextQuestion // null om inga fler frågor
             };
 
         }

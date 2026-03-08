@@ -10,5 +10,7 @@ namespace CyberQuiz.Shared.DTOs.Quiz
         public bool IsCorrect { get; set; }
         public int? CorrectAnswerOptionId { get; set; } // valfritt men nice för UI
         public SubCategoryProgressDto Progress { get; set; } = new();
+
+        public QuestionDto? NextQuestion { get; set; }
     }
 }

@@ -4,9 +4,11 @@ using CyberQuiz.Shared.DTOs.Quiz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+namespace CyberQuiz.API.Controllers;
 
 [ApiController]
 [Route("api/quiz")]
+[Authorize]
 public class QuizController : ControllerBase
 {
     private readonly IQuizService _quizService;
@@ -16,16 +18,19 @@ public class QuizController : ControllerBase
         _quizService = quizService;
     }
 
-public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
+    public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
     {
-            // Extract the user ID from the cookies
+        // Extract the user ID from the cookies
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
 
+        var question = await _quizService.GetNextQuestionAsync(subCategoryId, userId);
 
+        if (question == null)
             return NotFound();
 
+        return Ok(question);
     }
 
     [HttpPost("answer")]
@@ -35,16 +40,16 @@ public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
 
-            if (dto == null)
-                return BadRequest("Request body is missing.");
+        if (dto == null)
+            return BadRequest("Request body is missing.");
 
-            if (dto.SubCategoryId <= 0 || dto.QuestionId <= 0 || dto.SelectedAnswerOptionId <= 0)
-                return BadRequest("Invalid Request");
+        if (dto.SubCategoryId <= 0 || dto.QuestionId <= 0 || dto.SelectedAnswerOptionId <= 0)
+            return BadRequest("Invalid Request");
 
         var result = await _quizService.SubmitAnswerAsync(dto, userId);
 
         return Ok(result);
     }
 
-    
+    }
 }

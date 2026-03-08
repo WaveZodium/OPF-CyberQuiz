@@ -67,6 +67,17 @@ builder.Services.AddScoped<IUserResultRepository, UserResultRepository>();
 builder.Services.AddScoped<IProgressCalculator, ProgressCalculator>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 
+// Register AI Coach Service
+builder.Services.AddScoped<IAICoachService, AICoachService>();
+
+// Add HttpClient for Ollama AI
+builder.Services.AddHttpClient("Ollama", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:11434");
+    client.Timeout = TimeSpan.FromMinutes(1); // AI responses can take time, so we set a longer timeout
+});
+
+
 
 // Add CORS
 builder.Services.AddCors(options =>

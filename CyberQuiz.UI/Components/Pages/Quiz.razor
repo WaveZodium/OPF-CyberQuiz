@@ -1,0 +1,91 @@
+@page "/quiz/{SubCategoryId:int}"
+@using System.Net.Http.Json
+@using CyberQuiz.Shared.DTOs.Quiz
+@using CyberQuiz.UI.Services
+@inject IApiClient ApiClient
+
+<PageTitle>Questions</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="quiz-page">
+            <NavLink class="btn btn-link px-0 mb-3" href="/categories">← Back to categories</NavLink>
+
+            <h3 class="mb-3">Questions</h3>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+            else if (questions.Count == 0)
+            {
+                <div class="alert alert-info">No questions found for this subcategory.</div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @for (var i = 0; i < questions.Count; i++)
+                    {
+                        var question = questions[i];
+
+                        <div class="card question-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Question @(i + 1)</h5>
+                                <p class="card-text">@question.Text</p>
+
+                                <fieldset class="answer-group" aria-label="@($"Answers for question {i + 1}")">
+                                    @foreach (var option in question.AnswerOptions)
+                                    {
+                                        <label class="answer-option">
+                                            <input type="radio"
+                                                   name="@($"q-{question.QuestionId}")"
+                                                   value="@option.Id"
+                                                   checked="@IsSelected(question.QuestionId, option.Id)"
+                                                   @onchange="@(() => SelectOption(question.QuestionId, option.Id))" />
+                                            <span>@option.Text</span>
+                                        </label>
+                                    }
+                                </fieldset>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You must be logged in to view this page.</p>
+        <NavLink class="btn btn-primary" href="/login">Go to Login</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int SubCategoryId { get; set; }
+
+    private List<QuestionDto> questions = [];
+    private string? errorMessage;
+    private readonly Dictionary<int, int> selectedAnswersByQuestion = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            errorMessage = null;
+            questions = await ApiClient.HttpClient.GetFromJsonAsync<List<QuestionDto>>($"api/quiz/subcategories/{SubCategoryId}/questions") ?? [];
+            selectedAnswersByQuestion.Clear();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            questions = [];
+            selectedAnswersByQuestion.Clear();
+        }
+    }
+
+    private bool IsSelected(int questionId, int optionId)
+        => selectedAnswersByQuestion.TryGetValue(questionId, out var selectedOptionId) && selectedOptionId == optionId;
+
+    private void SelectOption(int questionId, int optionId)
+        => selectedAnswersByQuestion[questionId] = optionId;
+}

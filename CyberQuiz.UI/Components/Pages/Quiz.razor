@@ -1,4 +1,5 @@
 @page "/quiz/{SubCategoryId:int}"
+@rendermode InteractiveServer
 @using System.Net.Http.Json
 @using CyberQuiz.Shared.DTOs.Quiz
 @using CyberQuiz.UI.Services
@@ -30,7 +31,8 @@
 
                         <div class="card question-card">
                             <div class="card-body">
-                                <h5 class="card-title">Question @(i + 1)</h5>
+                                @* <h5 class="card-title">Question @(i + 1)</h5> *@
+                                <h5 class="card-title">Question @questionId</h5>
                                 <p class="card-text">@question.Text</p>
 
                                 <fieldset class="answer-group" aria-label="@($"Answers for question {i + 1}")">
@@ -46,6 +48,20 @@
                                         </label>
                                     }
                                 </fieldset>
+
+                                <div class="d-flex gap-2 mt-3">
+                                    <button class="btn btn-primary"
+                                            @onclick="() => SubmitAnswerAsync(question.QuestionId)"
+                                            disabled="@(!hasSelectedAnswer || hasSubmittedCurrentQuestion)">
+                                        Submit answer
+                                    </button>
+
+                                    <button class="btn btn-outline-primary"
+                                            @onclick="GoToNextQuestionAsync"
+                                            disabled="@(!hasSubmittedCurrentQuestion)">
+                                        Next question
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     }
@@ -59,6 +75,14 @@
     </NotAuthorized>
 </AuthorizeView>
 
+
+"subCategoryId": @SubCategoryId,
+<br />
+"questionId": @questionId,
+<br />
+"selectedAnswerOptionId": @selectedAnswerOptionId
+<br />
+
 @code {
     [Parameter]
     public int SubCategoryId { get; set; }
@@ -67,7 +91,18 @@
     private string? errorMessage;
     private readonly Dictionary<int, int> selectedAnswersByQuestion = [];
 
+    public int? questionId { get; set; }
+    public int? selectedAnswerOptionId { get; set; }
+
+    private bool hasSelectedAnswer;
+    private bool hasSubmittedCurrentQuestion;
+
     protected override async Task OnParametersSetAsync()
+    {
+        await LoadNextQuestionAsync();
+    }
+
+    private async Task LoadNextQuestionAsync()
     {
         try
         {
@@ -75,12 +110,21 @@
             var nextQuestion = await ApiClient.HttpClient.GetFromJsonAsync<QuestionDto>($"api/quiz/next/{SubCategoryId}");
             questions = nextQuestion is null ? [] : [nextQuestion];
             selectedAnswersByQuestion.Clear();
+
+            questionId = nextQuestion?.QuestionId;
+            selectedAnswerOptionId = null;
+            hasSelectedAnswer = false;
+            hasSubmittedCurrentQuestion = false;
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
             questions = [];
             selectedAnswersByQuestion.Clear();
+            questionId = null;
+            selectedAnswerOptionId = null;
+            hasSelectedAnswer = false;
+            hasSubmittedCurrentQuestion = false;
         }
     }
 
@@ -88,5 +132,49 @@
         => selectedAnswersByQuestion.TryGetValue(questionId, out var selectedOptionId) && selectedOptionId == optionId;
 
     private void SelectOption(int questionId, int optionId)
-        => selectedAnswersByQuestion[questionId] = optionId;
+    {
+        selectedAnswersByQuestion[questionId] = optionId;
+        selectedAnswerOptionId = optionId;
+        hasSelectedAnswer = true;
+        hasSubmittedCurrentQuestion = false; // nytt val => måste submit igen
+    }
+
+    private async Task SubmitAnswerAsync(int questionId)
+    {
+        if (!hasSelectedAnswer || selectedAnswerOptionId is null)
+            return;
+
+        try
+        {
+            errorMessage = null;
+
+            var dto = new SubmitAnswerRequestDto
+            {
+                SubCategoryId = SubCategoryId,
+                QuestionId = questionId,
+                SelectedAnswerOptionId = selectedAnswerOptionId.Value
+            };
+
+            var response = await ApiClient.HttpClient.PostAsJsonAsync("api/quiz/answer", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            hasSubmittedCurrentQuestion = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task GoToNextQuestionAsync()
+    {
+        if (!hasSubmittedCurrentQuestion)
+            return;
+
+        await LoadNextQuestionAsync();
+    }
 }

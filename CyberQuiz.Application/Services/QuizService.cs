@@ -151,18 +151,21 @@ namespace CyberQuiz.Application.Services
                 SelectedAnswerOptionId = dto.SelectedAnswerOptionId,
                 IsCorrect = isCorrect,
                 AnsweredAtUtc = DateTime.UtcNow
-
             };
 
             await _userResultRepo.AddAsync(userResult); // Save the user's answer result to the database
 
             var progress = await _progress.GetSubCategoryProgressAsync(dto.SubCategoryId, userId); // Calculate the user's progress in the subcategory
 
+            // Get the next question after submitting the answer
+            var nextQuestion = await GetNextQuestionAsync(dto.SubCategoryId, userId);
+
             return new SubmitAnswerResponseDto
             {
                 IsCorrect = isCorrect,
                 CorrectAnswerOptionId = correctAnswerOptionId,
-                Progress = progress
+                Progress = progress,
+                NextQuestion = nextQuestion // null om inga fler frågor
             };
 
         }

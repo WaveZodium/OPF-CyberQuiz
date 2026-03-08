@@ -108,7 +108,28 @@ namespace CyberQuiz.Application.Services
             var nextQuestion = questions.FirstOrDefault(q => !answeredQuestionIds.Contains(q.Id));
 
             if (nextQuestion is null)
+            {
+                // Check if there are more subcategories in the same category
+                var subCategory = await _subCategoryRepo.GetByIdAsync(subCategoryId);
+                if (subCategory is null)
+                    throw new NotFoundException($"Subcategory {subCategoryId} not found.");
+
+                var allSubCategories = await _subCategoryRepo.GetByCategoryAsync(subCategory.CategoryId);
+                var orderedSubCategories = allSubCategories.OrderBy(s => s.OrderIndex).ToList();
+
+                var currentIndex = orderedSubCategories.FindIndex(s => s.Id == subCategoryId);
+                var hasMoreSubCategories = currentIndex >= 0 && currentIndex < orderedSubCategories.Count - 1;
+
+                if (!hasMoreSubCategories)
+                {
+                    // Last subcategory - no more questions in entire category
+                    throw new DomainException("No more questions available in this category. You have completed all subcategories!");
+                }
+
+                // More subcategories exist - subcategory completed
                 return null;
+            }
+
 
             var options = await _answerRepo.GetByQuestionIdAsync(nextQuestion.Id); // Get answer options for the question
 
@@ -130,15 +151,15 @@ namespace CyberQuiz.Application.Services
             var question = await _questionRepo.GetByIdAsync(dto.QuestionId);
 
             if (question is null)
-                throw new InvalidOperationException($"Question {dto.QuestionId} not found.");
+                throw new NotFoundException($"Question {dto.QuestionId} not found.");
 
             if (question.SubCategoryId != dto.SubCategoryId)
-                throw new InvalidOperationException($"Question {dto.QuestionId} does not belong to subcategory {dto.SubCategoryId}.");
+                throw new ValidationException($"Question {dto.QuestionId} does not belong to subcategory {dto.SubCategoryId}.");
 
             // Get the selected answer option and check if it's correct.
             var selectedOption = await _answerRepo.GetByIdAsync(dto.SelectedAnswerOptionId);
             if (selectedOption is null)
-                throw new InvalidOperationException($"Answer option {dto.SelectedAnswerOptionId} not found.");
+                throw new NotFoundException($"Answer option {dto.SelectedAnswerOptionId} not found.");
 
             // Check if the selected answer option belongs to the question.
             bool isCorrect = selectedOption.IsCorrect;
@@ -164,15 +185,29 @@ namespace CyberQuiz.Application.Services
             var progress = await _progress.GetSubCategoryProgressAsync(dto.SubCategoryId, userId); // Calculate the user's progress in the subcategory
 
             // Get the next question after submitting the answer
-            var nextQuestion = await GetNextQuestionAsync(dto.SubCategoryId, userId);
-
-            return new SubmitAnswerResponseDto
+            try
             {
-                IsCorrect = isCorrect,
-                CorrectAnswerOptionId = correctAnswerOptionId,
-                Progress = progress,
-                NextQuestion = nextQuestion // null om inga fler frågor
-            };
+                var nextQuestion = await GetNextQuestionAsync(dto.SubCategoryId, userId);
+                
+                return new SubmitAnswerResponseDto
+                {
+                    IsCorrect = isCorrect,
+                    CorrectAnswerOptionId = correctAnswerOptionId,
+                    Progress = progress,
+                    NextQuestion = nextQuestion
+                };
+            }
+            catch (DomainException)
+            {
+                // Category completed - no more subcategories
+                return new SubmitAnswerResponseDto
+                {
+                    IsCorrect = isCorrect,
+                    CorrectAnswerOptionId = correctAnswerOptionId,
+                    Progress = progress,
+                    NextQuestion = null
+                };
+            }
 
         }
     }

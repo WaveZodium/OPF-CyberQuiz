@@ -72,7 +72,8 @@
         try
         {
             errorMessage = null;
-            questions = await ApiClient.HttpClient.GetFromJsonAsync<List<QuestionDto>>($"api/quiz/subcategories/{SubCategoryId}/questions") ?? [];
+            var nextQuestion = await ApiClient.HttpClient.GetFromJsonAsync<QuestionDto>($"api/quiz/next/{SubCategoryId}");
+            questions = nextQuestion is null ? [] : [nextQuestion];
             selectedAnswersByQuestion.Clear();
         }
         catch (Exception ex)

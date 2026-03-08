@@ -17,6 +17,8 @@ namespace CyberQuiz.Shared.DTOs.Progress
         // 0.00 - 1.00 (UI kan visa 0–100%)
         public decimal PercentCorrect { get; set; }
 
+        public decimal PercentAnswered { get; set; }
+
         // guard: har user försökt alla frågor minst en gång?
         public bool HasAttemptedAllQuestions { get; set; }
 

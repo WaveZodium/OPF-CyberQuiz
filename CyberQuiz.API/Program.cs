@@ -65,8 +65,8 @@ builder.Services.AddScoped<IUserResultRepository, UserResultRepository>();
 
 // Register Services
 builder.Services.AddScoped<IProgressCalculator, ProgressCalculator>();
-// builder.Services.AddScoped<IQuizService, QuizService>();
-// builder.Services.AddScoped<IAnswerService, AnswerService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+
 
 // Add CORS
 builder.Services.AddCors(options =>

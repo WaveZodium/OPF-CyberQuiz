@@ -51,4 +51,16 @@ public class QuizController : ControllerBase
 
         return Ok(result);
     }
+
+    // GET /api/quiz/review/1
+    [HttpGet("review/{subCategoryId:int}")]
+    public async Task<ActionResult<List<QuestionReviewDto>>> GetReview(int subCategoryId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var result = await _quizService.GetSubCategoryReviewAsync(subCategoryId, userId);
+        return Ok(result);
+    }
 }

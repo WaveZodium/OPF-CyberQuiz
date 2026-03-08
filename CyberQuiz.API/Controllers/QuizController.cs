@@ -18,6 +18,7 @@ public class QuizController : ControllerBase
         _quizService = quizService;
     }
 
+    [HttpGet("next/{subCategoryId}")]
     public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
     {
         // Extract the user ID from the cookies
@@ -49,7 +50,5 @@ public class QuizController : ControllerBase
         var result = await _quizService.SubmitAnswerAsync(dto, userId);
 
         return Ok(result);
-    }
-
     }
 }

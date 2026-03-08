@@ -3,6 +3,7 @@ using CyberQuiz.Infrastructure.Entities;
 using CyberQuiz.Infrastructure.Repositories;
 using CyberQuiz.Shared.DTOs.Catalog;
 using CyberQuiz.Shared.DTOs.Quiz;
+using CyberQuiz.Shared.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Text;

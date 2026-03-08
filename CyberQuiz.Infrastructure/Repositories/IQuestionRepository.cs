@@ -9,6 +9,7 @@ namespace CyberQuiz.Infrastructure.Repositories
     {
         Task<Question?> GetByIdAsync(int id);
         Task<List<Question>> GetBySubCategoryAsync(int subCategoryId);
+        Task<List<Question>> GetQuestionsWithAnswersAsync(int subCategoryId);
         Task AddAsync(Question question);
         Task UpdateAsync(Question question);
         Task DeleteAsync(int id);

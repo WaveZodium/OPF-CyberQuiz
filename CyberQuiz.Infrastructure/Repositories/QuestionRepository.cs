@@ -29,6 +29,16 @@ public class QuestionRepository : IQuestionRepository
             .ToListAsync();
     }
 
+    public async Task<List<Question>> GetQuestionsWithAnswersAsync(int subCategoryId)
+    {
+        return await _context.Questions
+            .Where(q => q.SubCategoryId == subCategoryId)
+            .Include(q => q.AnswerOptions)
+            .OrderBy(q => q.OrderIndex)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task AddAsync(Question question)
     {
         await _context.Questions.AddAsync(question);

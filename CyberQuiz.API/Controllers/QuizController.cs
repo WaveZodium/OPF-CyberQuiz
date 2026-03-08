@@ -16,6 +16,17 @@ public class QuizController : ControllerBase
     public QuizController(IQuizService quizService)
         => _quizService = quizService;
 
+    [HttpGet("subcategories/{subCategoryId:int}/questions")]
+    public async Task<ActionResult<List<QuestionDto>>> GetQuestions(int subCategoryId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var result = await _quizService.GetQuestionsAsync(subCategoryId, userId);
+        return Ok(result);
+    }
+
     [HttpGet("next/{subCategoryId:int}")]
     public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
     {

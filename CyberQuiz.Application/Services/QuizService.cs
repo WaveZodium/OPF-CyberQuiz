@@ -95,7 +95,7 @@ namespace CyberQuiz.Application.Services
 
             // If repository returns null, technical error
             if (questions is null)
-                throw new NotFoundException($"Subcategory {subCategoryId} not found.");
+                throw new NotFoundException($"Question not found.");
 
             // If no questions exist in database for this subcategory
             if (questions.Count == 0)

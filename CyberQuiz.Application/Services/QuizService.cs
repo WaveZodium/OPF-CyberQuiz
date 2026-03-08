@@ -231,6 +231,7 @@ namespace CyberQuiz.Application.Services
                 if (userResult is null)
                     continue;
 
+                var correctOption = question.AnswerOptions.FirstOrDefault(ao => ao.IsCorrect);
                 // Build the list of answer options for the review, marking which one is correct
                 var answerOptionReviews = question.AnswerOptions.Select(ao => new AnswerOptionReviewDto
                 {
@@ -245,6 +246,8 @@ namespace CyberQuiz.Application.Services
                 {
                     QuestionId = question.Id,
                     QuestionText = question.Text,
+                    SelectedAnswerOptionId = userResult.SelectedAnswerOptionId,
+                    CorrectAnswerOptionId = correctOption?.Id,
                     AnswerOptions = answerOptionReviews,
                     IsCorrect = userResult.IsCorrect
                 });

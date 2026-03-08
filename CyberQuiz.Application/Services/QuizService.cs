@@ -92,8 +92,13 @@ namespace CyberQuiz.Application.Services
             // Get all questions for the subcategory
             var questions = await _questionRepo.GetBySubCategoryAsync(subCategoryId);
 
-            if (questions is null || questions.Count == 0)
-                return null; // No questions available for the subcategory
+            // If repository returns null, technical error
+            if (questions is null)
+                throw new NotFoundException($"Subcategory {subCategoryId} not found.");
+
+            // If no questions exist in database for this subcategory
+            if (questions.Count == 0)
+                throw new ValidationException($"No questions available for subcategory {subCategoryId}.");
 
             // Get the list of question ids that the user has already answered for the subcategory
             var answeredQuestionIds = await _userResultRepo.GetAnsweredQuestionIdsAsync(userId, subCategoryId);

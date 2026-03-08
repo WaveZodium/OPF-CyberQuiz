@@ -3,6 +3,7 @@ using CyberQuiz.Infrastructure.Entities;
 using CyberQuiz.Infrastructure.Repositories;
 using CyberQuiz.Shared.DTOs.Catalog;
 using CyberQuiz.Shared.DTOs.Quiz;
+using CyberQuiz.Shared.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -112,11 +113,45 @@ namespace CyberQuiz.Application.Services
         {
             var questions = await _questionRepo.GetBySubCategoryAsync(subCategoryId);
 
-            if (questions is null || questions.Count == 0)
-                return null;
+            // If repository returns null, technical error
+            if (questions is null)
+                throw new NotFoundException($"Question not found.");
 
-            var nextQuestion = questions[0];
-            var options = await _answerRepo.GetByQuestionIdAsync(nextQuestion.Id);
+            // If no questions exist in database for this subcategory
+            if (questions.Count == 0)
+                throw new ValidationException($"No questions available for subcategory {subCategoryId}.");
+
+            // Get the list of question ids that the user has already answered for the subcategory
+            var answeredQuestionIds = await _userResultRepo.GetAnsweredQuestionIdsAsync(userId, subCategoryId);
+
+            // Find the first question that the user has not answered yet
+            var nextQuestion = questions.FirstOrDefault(q => !answeredQuestionIds.Contains(q.Id));
+
+            if (nextQuestion is null)
+            {
+                // Check if there are more subcategories in the same category
+                var subCategory = await _subCategoryRepo.GetByIdAsync(subCategoryId);
+                if (subCategory is null)
+                    throw new NotFoundException($"Subcategory {subCategoryId} not found.");
+
+                var allSubCategories = await _subCategoryRepo.GetByCategoryAsync(subCategory.CategoryId);
+                var orderedSubCategories = allSubCategories.OrderBy(s => s.OrderIndex).ToList();
+
+                var currentIndex = orderedSubCategories.FindIndex(s => s.Id == subCategoryId);
+                var hasMoreSubCategories = currentIndex >= 0 && currentIndex < orderedSubCategories.Count - 1;
+
+                if (!hasMoreSubCategories)
+                {
+                    // Last subcategory - no more questions in entire category
+                    throw new DomainException("No more questions available in this category. You have completed all subcategories!");
+                }
+
+                // More subcategories exist - subcategory completed
+                return null;
+            }
+
+
+            var options = await _answerRepo.GetByQuestionIdAsync(nextQuestion.Id); // Get answer options for the question
 
             return new QuestionDto
             {
@@ -135,14 +170,14 @@ namespace CyberQuiz.Application.Services
             var question = await _questionRepo.GetByIdAsync(dto.QuestionId);
 
             if (question is null)
-                throw new InvalidOperationException($"Question {dto.QuestionId} not found.");
+                throw new NotFoundException($"Question {dto.QuestionId} not found.");
 
             if (question.SubCategoryId != dto.SubCategoryId)
-                throw new InvalidOperationException($"Question {dto.QuestionId} does not belong to subcategory {dto.SubCategoryId}.");
+                throw new ValidationException($"Question {dto.QuestionId} does not belong to subcategory {dto.SubCategoryId}.");
 
             var selectedOption = await _answerRepo.GetByIdAsync(dto.SelectedAnswerOptionId);
             if (selectedOption is null)
-                throw new InvalidOperationException($"Answer option {dto.SelectedAnswerOptionId} not found.");
+                throw new NotFoundException($"Answer option {dto.SelectedAnswerOptionId} not found.");
 
             bool isCorrect = selectedOption.IsCorrect;
 
@@ -165,7 +200,8 @@ namespace CyberQuiz.Application.Services
 
             var progress = await _progress.GetSubCategoryProgressAsync(dto.SubCategoryId, userId);
 
-            return new SubmitAnswerResponseDto
+            // Get the next question after submitting the answer
+            try
             {
                 IsCorrect = isCorrect,
                 CorrectAnswerOptionId = correctAnswerOptionId,

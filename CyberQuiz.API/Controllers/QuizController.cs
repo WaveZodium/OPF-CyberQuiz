@@ -14,32 +14,24 @@ public class QuizController : ControllerBase
     private readonly IQuizService _quizService;
 
     public QuizController(IQuizService quizService)
-        => _quizService = quizService;
-
-    [HttpGet("subcategories/{subCategoryId:int}/questions")]
-    public async Task<ActionResult<List<QuestionDto>>> GetQuestions(int subCategoryId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
-            return Unauthorized();
-
-        var result = await _quizService.GetQuestionsAsync(subCategoryId, userId);
-        return Ok(result);
+        _quizService = quizService;
     }
 
-    [HttpGet("next/{subCategoryId:int}")]
+    [HttpGet("next/{subCategoryId}")]
     public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
     {
+        // Extract the user ID from the cookies
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
 
-        var result = await _quizService.GetNextQuestionAsync(subCategoryId, userId);
+        var question = await _quizService.GetNextQuestionAsync(subCategoryId, userId);
 
-        if (result is null)
+        if (question == null)
             return NotFound();
 
-        return Ok(result);
+        return Ok(question);
     }
 
     [HttpPost("answer")]
@@ -49,7 +41,14 @@ public class QuizController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
 
+        if (dto == null)
+            return BadRequest("Request body is missing.");
+
+        if (dto.SubCategoryId <= 0 || dto.QuestionId <= 0 || dto.SelectedAnswerOptionId <= 0)
+            return BadRequest("Invalid Request");
+
         var result = await _quizService.SubmitAnswerAsync(dto, userId);
+
         return Ok(result);
     }
 }

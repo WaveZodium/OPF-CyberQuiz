@@ -1,10 +1,11 @@
+using CyberQuiz.API.Middleware;
 using CyberQuiz.Application.Interfaces;
 using CyberQuiz.Application.Services;
 using CyberQuiz.Infrastructure.Data;
 using CyberQuiz.Infrastructure.Data.Seed;
 using CyberQuiz.Infrastructure.Entities;
-using Microsoft.AspNetCore.DataProtection;
 using CyberQuiz.Infrastructure.Repositories;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IUserResultRepository, UserResultRepository>();
 builder.Services.AddScoped<IProgressCalculator, ProgressCalculator>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -90,6 +92,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Register global exception handling middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 
 // Enable CORS
 app.UseCors("AllowUI");

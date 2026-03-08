@@ -3,7 +3,7 @@ using CyberQuiz.Application.Interfaces;
 using CyberQuiz.Shared.DTOs.Quiz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+
 
 [ApiController]
 [Route("api/quiz")]
@@ -12,8 +12,11 @@ public class QuizController : ControllerBase
     private readonly IQuizService _quizService;
 
     public QuizController(IQuizService quizService)
+    {
+        _quizService = quizService;
+    }
 
-    public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
+public async Task<ActionResult<QuestionDto>> GetNextQuestion(int subCategoryId)
     {
             // Extract the user ID from the cookies
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -43,5 +46,5 @@ public class QuizController : ControllerBase
         return Ok(result);
     }
 
-    }
+    
 }

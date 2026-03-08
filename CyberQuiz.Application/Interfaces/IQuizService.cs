@@ -9,7 +9,6 @@ namespace CyberQuiz.Application.Interfaces
     public interface IQuizService
     {
         Task<List<CategoryDto>> GetCategoriesForUserAsync(string userId);
-        Task<List<QuestionDto>> GetQuestionsAsync(int subCategoryId, string userId);
         Task<QuestionDto?> GetNextQuestionAsync(int subCategoryId, string userId);
         Task<SubmitAnswerResponseDto> SubmitAnswerAsync(SubmitAnswerRequestDto dto, string userId);
     }

@@ -37,17 +37,21 @@ namespace CyberQuiz.Application.Services
 
         public async Task<List<CategoryDto>> GetCategoriesForUserAsync(string userId)
         {
+            // Get all categories and their subcategories
             var categories = await _categoryRepo.GetAllCategoriesWithSubCategoriesAsync();
+
+            // Creates the list of CategoryDto to return
             var result = new List<CategoryDto>();
 
             foreach (var category in categories)
             {
-                var orderedSubs = category.SubCategories
-                    . OrderBy(sc => sc.OrderIndex)
+                var orderedSubs = category.SubCategories.
+                    OrderBy(sc => sc.OrderIndex)
                     .ToList();
 
                 var subCategoryDtos = new List<SubCategoryDto>();
-                bool previousCompleted = true;
+
+                bool previousCompleted = true; // The first subcategory is unlocked by default
 
                 foreach (var sub in orderedSubs)
                 {
@@ -66,10 +70,10 @@ namespace CyberQuiz.Application.Services
                         PercentCorrect = progress.PercentCorrect,
                         TotalQuestions = progress.TotalQuestions
                     });
-
+                    // updates the previousCompleted variable for the next iteration, if the current subcategory is not completed, the next one will be locked
                     previousCompleted = progress.IsCompleted;
                 }
-
+                // BUilds the CategoryDto ands adds it to the result list
                 result.Add(new CategoryDto
                 {
                     Id = category.Id,
@@ -79,43 +83,19 @@ namespace CyberQuiz.Application.Services
             }
 
             return result;
+
+
         }
 
-        public async Task<List<QuestionDto>> GetQuestionsAsync(int subCategoryId, string userId)
-        {
-            var questions = await _questionRepo.GetBySubCategoryAsync(subCategoryId);
-
-            if (questions is null || questions.Count == 0)
-                return [];
-
-            var result = new List<QuestionDto>(questions.Count);
-
-            foreach (var question in questions)
-            {
-                var options = await _answerRepo.GetByQuestionIdAsync(question.Id);
-
-                result.Add(new QuestionDto
-                {
-                    QuestionId = question.Id,
-                    Text = question.Text,
-                    AnswerOptions = options.Select(o => new AnswerOptionDto
-                    {
-                        Id = o.Id,
-                        Text = o.Text
-                    }).ToList()
-                });
-            }
-
-            return result;
-        }
 
         public async Task<QuestionDto?> GetNextQuestionAsync(int subCategoryId, string userId)
         {
+            // Get all questions for the subcategory
             var questions = await _questionRepo.GetBySubCategoryAsync(subCategoryId);
 
             // If repository returns null, technical error
             if (questions is null)
-                throw new NotFoundException($"Question not found.");
+                throw new NotFoundException($"Subcategory {subCategoryId} not found.");
 
             // If no questions exist in database for this subcategory
             if (questions.Count == 0)
@@ -167,6 +147,7 @@ namespace CyberQuiz.Application.Services
 
         public async Task<SubmitAnswerResponseDto> SubmitAnswerAsync(SubmitAnswerRequestDto dto, string userId)
         {
+            // Searches if the question exists and belongs to the specified subcategory, then checks if the selected answer is correct.
             var question = await _questionRepo.GetByIdAsync(dto.QuestionId);
 
             if (question is null)
@@ -175,16 +156,19 @@ namespace CyberQuiz.Application.Services
             if (question.SubCategoryId != dto.SubCategoryId)
                 throw new ValidationException($"Question {dto.QuestionId} does not belong to subcategory {dto.SubCategoryId}.");
 
+            // Get the selected answer option and check if it's correct.
             var selectedOption = await _answerRepo.GetByIdAsync(dto.SelectedAnswerOptionId);
             if (selectedOption is null)
                 throw new NotFoundException($"Answer option {dto.SelectedAnswerOptionId} not found.");
 
+            // Check if the selected answer option belongs to the question.
             bool isCorrect = selectedOption.IsCorrect;
 
-            int? correctAnswerOptionId = null;
-            var allOptions = await _answerRepo.GetByQuestionIdAsync(dto.QuestionId);
-            var correctOption = allOptions.FirstOrDefault(o => o.IsCorrect);
-            correctAnswerOptionId = correctOption?.Id;
+            int? correctAnswerOptionId = null; // If the answer is incorrect it is null, otherwise it is the same as the selected answer option id
+            var allOptions = await _answerRepo.GetByQuestionIdAsync(dto.QuestionId); // Get all answer options for the question to find the correct one
+
+            var correctOption = allOptions.FirstOrDefault(o => o.IsCorrect); // Find the correct answer option among all options for the question
+            correctAnswerOptionId = correctOption?.Id; // If the correct option is found, set the correct answer option id to its id, otherwise it remains null
 
             var userResult = new UserResult
             {
@@ -196,17 +180,35 @@ namespace CyberQuiz.Application.Services
                 AnsweredAtUtc = DateTime.UtcNow
             };
 
-            await _userResultRepo.AddAsync(userResult);
+            await _userResultRepo.AddAsync(userResult); // Save the user's answer result to the database
 
-            var progress = await _progress.GetSubCategoryProgressAsync(dto.SubCategoryId, userId);
+            var progress = await _progress.GetSubCategoryProgressAsync(dto.SubCategoryId, userId); // Calculate the user's progress in the subcategory
 
             // Get the next question after submitting the answer
             try
             {
-                IsCorrect = isCorrect,
-                CorrectAnswerOptionId = correctAnswerOptionId,
-                Progress = progress
-            };
+                var nextQuestion = await GetNextQuestionAsync(dto.SubCategoryId, userId);
+
+                return new SubmitAnswerResponseDto
+                {
+                    IsCorrect = isCorrect,
+                    CorrectAnswerOptionId = correctAnswerOptionId,
+                    Progress = progress,
+                    NextQuestion = nextQuestion
+                };
+            }
+            catch (DomainException)
+            {
+                // Category completed - no more subcategories
+                return new SubmitAnswerResponseDto
+                {
+                    IsCorrect = isCorrect,
+                    CorrectAnswerOptionId = correctAnswerOptionId,
+                    Progress = progress,
+                    NextQuestion = null
+                };
+            }
+
         }
     }
 }

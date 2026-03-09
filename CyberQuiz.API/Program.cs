@@ -70,8 +70,6 @@ builder.Services.AddScoped<IProgressCalculator, ProgressCalculator>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 // Register AI coach service
 builder.Services.AddScoped<IAICoachService, AICoachService>();
-//user profile service
-builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
 // Register HttpClient for Ollama
 builder.Services.AddHttpClient("Ollama", client =>

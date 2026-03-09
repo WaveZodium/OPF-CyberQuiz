@@ -15,6 +15,8 @@ namespace CyberQuiz.Shared.DTOs.Catalog
 
         public decimal PercentCorrect { get; set; }
 
+        public decimal ProgressPercent { get; set; }
+
         public int TotalQuestions { get; set; }
     }
 }

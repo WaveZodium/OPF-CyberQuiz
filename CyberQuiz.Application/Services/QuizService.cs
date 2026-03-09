@@ -147,16 +147,6 @@ namespace CyberQuiz.Application.Services
                 IsLastQuestion = isLastQuestion
             };
 
-            return new QuestionDto
-            {
-                QuestionId = nextQuestion.Id,
-                Text = nextQuestion.Text,
-                AnswerOptions = options.Select(o => new AnswerOptionDto
-                {
-                    Id = o.Id,
-                    Text = o.Text
-                }).ToList()
-            };
         }
 
         public async Task<SubmitAnswerResponseDto> SubmitAnswerAsync(SubmitAnswerRequestDto dto, string userId)

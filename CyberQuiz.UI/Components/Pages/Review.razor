@@ -3,11 +3,13 @@
 @using CyberQuiz.Shared.DTOs.Progress
 @using CyberQuiz.Shared.DTOs.Quiz
 @using CyberQuiz.UI.Services
+@using CyberQuiz.UI.Models
+@using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
 
-<h3>Review</h3>
+<NavLink class="btn btn-link px-0 mb-3" href="/categories/">← Back to subcategories</NavLink>
 
-Sub Category ID: @subCategoryId<br/>
+<h3>Review</h3>
 
 @if (!string.IsNullOrWhiteSpace(errorMessage))
 {
@@ -21,23 +23,13 @@ else
 {
     @foreach (var review in ReviewData)
     {
-        <div>
-            Question ID: @review.QuestionId<br />
-            Selected Answer Option ID: @review.SelectedAnswerOptionId<br />
-            Correct Answer Option ID: @review.CorrectAnswerOptionId<br />
-            Is Correct: @review.IsCorrect<br />
-            Answer Options: @string.Join(", ", review.AnswerOptions)<br />
-            @foreach(var option in review.AnswerOptions)
-            {
-                <div>
-                    Option: @option<br>
-                    @option.Text<br/>
-                    @option.IsCorrect<br />
-                    @option.Id<br />
-                    @option.IsSelectedByUser<br />
-                </div>
-            }
-        </div>
+        <QuestionCard Title="@($"Question {review.QuestionId}")"
+                      QuestionText="@review.QuestionText"
+                      AnswerOptions="@GetReviewAnswerOptions(review)"
+                      SelectedAnswerOptionId="@review.SelectedAnswerOptionId"
+                      GroupName="@($"review-{review.QuestionId}")"
+                      AriaLabel="@($"Answers for question {review.QuestionId}")"
+                      IsReadOnly="true" />
         <br /><br />
     }
 }
@@ -69,4 +61,15 @@ else
             ReviewData = null;
         }
     }
+
+    private IReadOnlyList<AnswerOptionViewModel> GetReviewAnswerOptions(QuestionReviewDto review)
+        => review.AnswerOptions
+            .Select(option => new AnswerOptionViewModel
+            {
+                Id = option.Id,
+                Text = option.Text,
+                IsCorrect = option.IsCorrect,
+                IsSelectedByUser = option.IsSelectedByUser
+            })
+            .ToList();
 }

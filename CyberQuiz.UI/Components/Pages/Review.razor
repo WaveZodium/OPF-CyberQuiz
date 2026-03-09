@@ -1,10 +1,48 @@
 ﻿@page "/review/{subCategoryId:int}"
 @using CyberQuiz.Shared.DTOs.Catalog
 @using CyberQuiz.Shared.DTOs.Progress
+@using CyberQuiz.Shared.DTOs.Quiz
 @using CyberQuiz.UI.Services
 @inject IApiClient ApiClient
 
 <h3>Review</h3>
+
+Sub Category ID: @subCategoryId<br/>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="text-danger">@errorMessage</div>
+}
+else if (ReviewData is null)
+{
+    <div>Loading...</div>
+}
+else
+{
+    @foreach (var review in ReviewData)
+    {
+        <div>
+            Question ID: @review.QuestionId<br />
+            Selected Answer Option ID: @review.SelectedAnswerOptionId<br />
+            Correct Answer Option ID: @review.CorrectAnswerOptionId<br />
+            Is Correct: @review.IsCorrect<br />
+            Answer Options: @string.Join(", ", review.AnswerOptions)<br />
+            @foreach(var option in review.AnswerOptions)
+            {
+                <div>
+                    Option: @option<br>
+                    @option.Text<br/>
+                    @option.IsCorrect<br />
+                    @option.Id<br />
+                    @option.IsSelectedByUser<br />
+                </div>
+            }
+        </div>
+        <br /><br />
+    }
+}
+
+<br />
 
 @code {
     [Parameter]
@@ -13,15 +51,20 @@
     private SubCategoryProgressDto? selectedCategory;
     private string? errorMessage;
 
-    public SubCategoryProgressDto? ReviewData { get; set; } = new SubCategoryProgressDto();
+    public List<QuestionReviewDto>? ReviewData { get; set; } = new List<QuestionReviewDto>();
 
-    protected override async Task OnParametersSetAsync() {
-        try {
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
             errorMessage = null;
 
-            ReviewData = await ApiClient.HttpClient.GetFromJsonAsync<SubCategoryProgressDto>(@"/api/quiz/review/{subCategoryId}") ?? new SubCategoryProgressDto();
+            ReviewData = await ApiClient.HttpClient
+                .GetFromJsonAsync<List<QuestionReviewDto>>("/api/quiz/review/" + subCategoryId)
+                ?? new List<QuestionReviewDto>();
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             errorMessage = ex.Message;
             ReviewData = null;
         }

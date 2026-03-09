@@ -63,4 +63,16 @@ public class QuizController : ControllerBase
         var result = await _quizService.GetSubCategoryReviewAsync(subCategoryId, userId);
         return Ok(result);
     }
+
+
+    // GET /api/quiz/delete-progress/1
+    //[HttpDelete("delete-progress/{subCategoryId:int}")]
+    //public async Task<ActionResult> DeleteProgress(int subCategoryId)
+    //{
+    //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    //    if (string.IsNullOrWhiteSpace(userId))
+    //        return Unauthorized();
+    //    await _quizService.DeleteProgressAsync(subCategoryId, userId);
+    //    return NoContent();
+    //}
 }

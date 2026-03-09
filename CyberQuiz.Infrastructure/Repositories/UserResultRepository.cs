@@ -58,6 +58,16 @@ public class UserResultRepository : IUserResultRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task DeleteBySubCategoryAsync(string userId, int subCategoryId)
+    {
+        var results = await _context.UserResults
+            .Where(ur => ur.UserId == userId && ur.SubCategoryId == subCategoryId)
+            .ToListAsync();
+        
+        _context.UserResults.RemoveRange(results);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<int> CountCorrectAnswersAsync(string userId, int subCategoryId)
     {
         return await _context.UserResults
@@ -114,5 +124,12 @@ public class UserResultRepository : IUserResultRepository
             .Select(ur => ur.QuestionId)
             .Distinct()
             .CountAsync();
+    }
+
+    // Method to get the most recent result for a specific question and user
+    public async Task<UserResult?> GetByUserAndQuestionAsync(string userId, int questionId)
+    {
+        return await _context.UserResults
+            .FirstOrDefaultAsync(r => r.UserId == userId && r.QuestionId == questionId);
     }
 }

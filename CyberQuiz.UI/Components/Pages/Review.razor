@@ -1,0 +1,29 @@
+﻿@page "/review/{subCategoryId:int}"
+@using CyberQuiz.Shared.DTOs.Catalog
+@using CyberQuiz.Shared.DTOs.Progress
+@using CyberQuiz.UI.Services
+@inject IApiClient ApiClient
+
+<h3>Review</h3>
+
+@code {
+    [Parameter]
+    public int subCategoryId { get; set; }
+
+    private SubCategoryProgressDto? selectedCategory;
+    private string? errorMessage;
+
+    public SubCategoryProgressDto? ReviewData { get; set; } = new SubCategoryProgressDto();
+
+    protected override async Task OnParametersSetAsync() {
+        try {
+            errorMessage = null;
+
+            ReviewData = await ApiClient.HttpClient.GetFromJsonAsync<SubCategoryProgressDto>(@"/api/quiz/review/{subCategoryId}") ?? new SubCategoryProgressDto();
+        }
+        catch (Exception ex) {
+            errorMessage = ex.Message;
+            ReviewData = null;
+        }
+    }
+}

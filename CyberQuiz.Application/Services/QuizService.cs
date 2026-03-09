@@ -210,5 +210,50 @@ namespace CyberQuiz.Application.Services
             }
 
         }
+
+        public async Task<List<QuestionReviewDto>> GetSubCategoryReviewAsync(int subCategoryId, string userId)
+        {
+            // Get all questions for the subcategory along with the user's answers
+            var questions = await _questionRepo.GetQuestionsWithAnswersAsync(subCategoryId);
+
+            // Get the user's results for the subcategory
+            var userResults = await _userResultRepo.GetBySubCategoryAsync(userId, subCategoryId);
+
+            // Build the review list
+            var reviewList = new List<QuestionReviewDto>();
+
+            //Loop through each question
+
+            foreach (var question in questions)
+            {
+                var userResult = userResults.FirstOrDefault(ur => ur.QuestionId == question.Id);
+
+                if (userResult is null)
+                    continue;
+
+                var correctOption = question.AnswerOptions.FirstOrDefault(ao => ao.IsCorrect);
+                // Build the list of answer options for the review, marking which one is correct
+                var answerOptionReviews = question.AnswerOptions.Select(ao => new AnswerOptionReviewDto
+                {
+                    Id = ao.Id,
+                    Text = ao.Text,
+                    IsCorrect = ao.IsCorrect,
+                    IsSelectedByUser = ao.Id == userResult.SelectedAnswerOptionId
+                }).ToList();
+
+                // Build the QuestionReviewDto for the question and add it to the review list
+                reviewList.Add(new QuestionReviewDto
+                {
+                    QuestionId = question.Id,
+                    QuestionText = question.Text,
+                    SelectedAnswerOptionId = userResult.SelectedAnswerOptionId,
+                    CorrectAnswerOptionId = correctOption?.Id,
+                    AnswerOptions = answerOptionReviews,
+                    IsCorrect = userResult.IsCorrect
+                });
+            }
+
+            return reviewList;
+        }
     }
 }

@@ -24,5 +24,6 @@ namespace CyberQuiz.Shared.DTOs.Progress
 
         // 80%-regel + guard
         public bool IsCompleted { get; set; }
+        public decimal ProgressPercent { get; set; }
     }
 }

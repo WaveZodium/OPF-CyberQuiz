@@ -46,7 +46,7 @@ namespace CyberQuiz.Application.Services
 
             decimal percentCorrect = totalAttempts == 0
                 ? 0m
-                : (decimal)correctAttempts / totalAttempts;
+                : (decimal)correctAttempts / totalAttempts * 100m;
 
             bool isCompleted = hasAttemptedAllQuestions && percentCorrect >= 0.80m;
 

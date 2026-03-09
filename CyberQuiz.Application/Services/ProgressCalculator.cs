@@ -48,6 +48,7 @@ namespace CyberQuiz.Application.Services
                 ? 0m
                 : (decimal)correctAttempts / totalAttempts * 100m;
 
+            decimal progressPercent = (decimal)attemptedDistinctQuestions / totalQuestions * 100m;
             bool isCompleted = hasAttemptedAllQuestions && percentCorrect >= 0.80m;
 
             return new SubCategoryProgressDto

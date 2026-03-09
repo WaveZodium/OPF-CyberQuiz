@@ -2,7 +2,9 @@
 @rendermode InteractiveServer
 @using System.Net.Http.Json
 @using CyberQuiz.Shared.DTOs.Quiz
+@using CyberQuiz.UI.Models
 @using CyberQuiz.UI.Services
+@using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
 
 <PageTitle>Questions</PageTitle>
@@ -29,41 +31,27 @@
                     {
                         var question = questions[i];
 
-                        <div class="card question-card">
-                            <div class="card-body">
-                                @* <h5 class="card-title">Question @(i + 1)</h5> *@
-                                <h5 class="card-title">Question @questionId</h5>
-                                <p class="card-text">@question.Text</p>
+                        <QuestionCard Title="@($"Question {questionId}")"
+                                      QuestionText="@question.Text"
+                                      AnswerOptions="@GetAnswerOptions(question)"
+                                      SelectedAnswerOptionId="@GetSelectedOptionId(question.QuestionId)"
+                                      GroupName="@($"q-{question.QuestionId}")"
+                                      AriaLabel="@($"Answers for question {i + 1}")"
+                                      OnSelectOption="@((optionId) => SelectOption(question.QuestionId, optionId))">
+                            <ActionContent>
+                                <button class="btn btn-primary"
+                                        @onclick="() => SubmitAnswerAsync(question.QuestionId)"
+                                        disabled="@(!hasSelectedAnswer || hasSubmittedCurrentQuestion)">
+                                    Submit answer
+                                </button>
 
-                                <fieldset class="answer-group" aria-label="@($"Answers for question {i + 1}")">
-                                    @foreach (var option in question.AnswerOptions)
-                                    {
-                                        <label class="answer-option">
-                                            <input type="radio"
-                                                   name="@($"q-{question.QuestionId}")"
-                                                   value="@option.Id"
-                                                   checked="@IsSelected(question.QuestionId, option.Id)"
-                                                   @onchange="@(() => SelectOption(question.QuestionId, option.Id))" />
-                                            <span>@option.Text</span>
-                                        </label>
-                                    }
-                                </fieldset>
-
-                                <div class="d-flex gap-2 mt-3">
-                                    <button class="btn btn-primary"
-                                            @onclick="() => SubmitAnswerAsync(question.QuestionId)"
-                                            disabled="@(!hasSelectedAnswer || hasSubmittedCurrentQuestion)">
-                                        Submit answer
-                                    </button>
-
-                                    <button class="btn btn-outline-primary"
-                                            @onclick="GoToNextQuestionAsync"
-                                            disabled="@(!hasSubmittedCurrentQuestion)">
-                                        Next question
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                                <button class="btn btn-outline-primary"
+                                        @onclick="GoToNextQuestionAsync"
+                                        disabled="@(!hasSubmittedCurrentQuestion)">
+                                    Next question
+                                </button>
+                            </ActionContent>
+                        </QuestionCard>
                     }
                 </div>
             }
@@ -179,4 +167,20 @@ selectedAnswerOptionId: @selectedAnswerOptionId
 
         await LoadNextQuestionAsync();
     }
+
+    private IReadOnlyList<AnswerOptionViewModel> GetAnswerOptions(QuestionDto question)
+        => question.AnswerOptions
+            .Select(option => new AnswerOptionViewModel
+            {
+                Id = option.Id,
+                Text = option.Text,
+                IsCorrect = false,
+                IsSelectedByUser = false
+            })
+            .ToList();
+
+    private int? GetSelectedOptionId(int questionId)
+        => selectedAnswersByQuestion.TryGetValue(questionId, out var selectedOptionId)
+            ? selectedOptionId
+            : null;
 }

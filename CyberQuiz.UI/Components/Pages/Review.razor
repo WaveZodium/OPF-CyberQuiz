@@ -7,7 +7,7 @@
 @using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
 
-<NavLink class="btn btn-link px-0 mb-3" href="/categories/">← Back to subcategories</NavLink>
+<NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
 
 <h3>Review</h3>
 
@@ -42,6 +42,7 @@ else
 
     private SubCategoryProgressDto? selectedCategory;
     private string? errorMessage;
+    private int? categoryId;
 
     public List<QuestionReviewDto>? ReviewData { get; set; } = new List<QuestionReviewDto>();
 
@@ -54,6 +55,14 @@ else
             ReviewData = await ApiClient.HttpClient
                 .GetFromJsonAsync<List<QuestionReviewDto>>("/api/quiz/review/" + subCategoryId)
                 ?? new List<QuestionReviewDto>();
+
+            var categories = await ApiClient.HttpClient
+                .GetFromJsonAsync<List<CategoryDto>>("api/categories")
+                ?? new List<CategoryDto>();
+
+            categoryId = categories
+                .FirstOrDefault(c => c.SubCategories.Any(sc => sc.Id == subCategoryId))
+                ?.Id;
         }
         catch (Exception ex)
         {

@@ -9,5 +9,6 @@ namespace CyberQuiz.Shared.DTOs.Catalog
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public List<SubCategoryDto> SubCategories { get; set; } = new();
+        public decimal ProgressPercent { get; set; }
     }
 }

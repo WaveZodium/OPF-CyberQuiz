@@ -63,23 +63,16 @@ public class QuizController : ControllerBase
         var result = await _quizService.GetSubCategoryReviewAsync(subCategoryId, userId);
         return Ok(result);
     }
-    // PUT /api/quiz/result
-    [HttpPut("result")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateQuizResult([FromBody] UpdateQuizResultRequestDto dto)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
-            return Unauthorized();
 
-        await _quizService.UpdateQuizResultAsync(
-            userId,
-            dto.QuestionId,
-            dto.SelectedAnswerOptionId,
-            dto.IsCorrect);
 
-        return NoContent();
-    }
+    // GET /api/quiz/delete-progress/1
+    //[HttpDelete("delete-progress/{subCategoryId:int}")]
+    //public async Task<ActionResult> DeleteProgress(int subCategoryId)
+    //{
+    //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    //    if (string.IsNullOrWhiteSpace(userId))
+    //        return Unauthorized();
+    //    await _quizService.DeleteProgressAsync(subCategoryId, userId);
+    //    return NoContent();
+    //}
 }

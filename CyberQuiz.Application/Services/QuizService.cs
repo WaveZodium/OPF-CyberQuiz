@@ -278,5 +278,16 @@ namespace CyberQuiz.Application.Services
 
             await _userResultRepo.UpdateAsync(existingResult);
         }
+
+        public async Task ResetSubCategoryProgressAsync(int subCategoryId, string userId)
+        {
+            // Verify that the subcategory exists
+            var subCategory = await _subCategoryRepo.GetByIdAsync(subCategoryId);
+            if (subCategory is null)
+                throw new NotFoundException($"Subcategory {subCategoryId} not found.");
+
+            // Delete all user results for this subcategory
+            await _userResultRepo.DeleteBySubCategoryAsync(userId, subCategoryId);
+        }
     }
 }

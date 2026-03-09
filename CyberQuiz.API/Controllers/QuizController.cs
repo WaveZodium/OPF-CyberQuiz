@@ -65,14 +65,16 @@ public class QuizController : ControllerBase
     }
 
 
-    // GET /api/quiz/delete-progress/1
-    //[HttpDelete("delete-progress/{subCategoryId:int}")]
-    //public async Task<ActionResult> DeleteProgress(int subCategoryId)
-    //{
-    //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //    if (string.IsNullOrWhiteSpace(userId))
-    //        return Unauthorized();
-    //    await _quizService.DeleteProgressAsync(subCategoryId, userId);
-    //    return NoContent();
-    //}
+    // DELETE /api/quiz/reset/{subCategoryId}
+    [HttpDelete("reset/{subCategoryId:int}")]
+    public async Task<ActionResult> ResetProgress(int subCategoryId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        await _quizService.ResetSubCategoryProgressAsync(subCategoryId, userId);
+        return NoContent();
+    }
 }
+

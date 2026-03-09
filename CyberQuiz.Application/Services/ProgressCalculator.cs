@@ -33,6 +33,7 @@ namespace CyberQuiz.Application.Services
                     TotalAttempts = 0,
                     CorrectAttempts = 0,
                     PercentCorrect = 0m,
+                    ProgressPercent = 0m,
                     HasAttemptedAllQuestions = false,
                     IsCompleted = false
                 };
@@ -48,7 +49,9 @@ namespace CyberQuiz.Application.Services
                 ? 0m
                 : (decimal)correctAttempts / totalAttempts * 100m;
 
-            bool isCompleted = hasAttemptedAllQuestions && percentCorrect >= 0.80m;
+            decimal progressPercent = (decimal)attemptedDistinctQuestions / totalQuestions * 100m;
+
+            bool isCompleted = hasAttemptedAllQuestions && percentCorrect >= 80m;
 
             return new SubCategoryProgressDto
             {
@@ -57,6 +60,7 @@ namespace CyberQuiz.Application.Services
                 TotalAttempts = totalAttempts,
                 CorrectAttempts = correctAttempts,
                 PercentCorrect = percentCorrect,
+                ProgressPercent = progressPercent,
                 HasAttemptedAllQuestions = hasAttemptedAllQuestions,
                 IsCompleted = isCompleted
             };

@@ -133,6 +133,8 @@ namespace CyberQuiz.Application.Services
 
             var options = await _answerRepo.GetByQuestionIdAsync(nextQuestion.Id); // Get answer options for the question
 
+            var unansweredQuestions = questions.Where(q => !answeredQuestionIds.Contains(q.Id)).ToList();// Get the list of unanswered questions for the subcategory
+            bool isLastQuestion = unansweredQuestions.Count == 1; // If there is only one unanswered question, it means that the next question is the last one for the subcategory
             return new QuestionDto
             {
                 QuestionId = nextQuestion.Id,
@@ -141,8 +143,10 @@ namespace CyberQuiz.Application.Services
                 {
                     Id = o.Id,
                     Text = o.Text
-                }).ToList()
+                }).ToList(),
+                IsLastQuestion = isLastQuestion
             };
+
         }
 
         public async Task<SubmitAnswerResponseDto> SubmitAnswerAsync(SubmitAnswerRequestDto dto, string userId)

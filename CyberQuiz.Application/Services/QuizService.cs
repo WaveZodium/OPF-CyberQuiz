@@ -260,5 +260,23 @@ namespace CyberQuiz.Application.Services
 
             return reviewList;
         }
+
+        public async Task UpdateQuizResultAsync(
+            string userId,
+            int questionId,
+            int selectedAnswerOptionId,
+            bool isCorrect)
+        {
+            var existingResult = await _userResultRepo.GetByUserAndQuestionAsync(userId, questionId);
+
+            if (existingResult is null)
+                throw new NotFoundException($"User result for question {questionId} was not found.");
+
+            existingResult.SelectedAnswerOptionId = selectedAnswerOptionId;
+            existingResult.IsCorrect = isCorrect;
+            existingResult.AnsweredAtUtc = DateTime.UtcNow;
+
+            await _userResultRepo.UpdateAsync(existingResult);
+        }
     }
 }

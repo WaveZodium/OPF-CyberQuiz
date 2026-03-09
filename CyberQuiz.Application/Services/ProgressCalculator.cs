@@ -45,9 +45,9 @@ namespace CyberQuiz.Application.Services
 
             bool hasAttemptedAllQuestions = attemptedDistinctQuestions >= totalQuestions;
 
-            decimal percentCorrect = totalAttempts == 0
+            decimal percentCorrect = totalQuestions == 0
                 ? 0m
-                : (decimal)correctAttempts / totalAttempts * 100m;
+                : (decimal)correctAttempts / totalQuestions * 100m;
 
             decimal progressPercent = (decimal)attemptedDistinctQuestions / totalQuestions * 100m;
 

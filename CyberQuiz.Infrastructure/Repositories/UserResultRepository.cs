@@ -92,4 +92,9 @@ public class UserResultRepository : IUserResultRepository
             .Distinct()
             .ToListAsync();
     }
+    public async Task<UserResult?> GetByUserAndQuestionAsync(string userId, int questionId)
+    {
+        return await _context.UserResults
+            .FirstOrDefaultAsync(r => r.UserId == userId && r.QuestionId == questionId);
+    }
 }

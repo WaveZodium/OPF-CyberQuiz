@@ -9,5 +9,6 @@ namespace CyberQuiz.Shared.DTOs.Quiz
         public int QuestionId { get; set; }
         public string Text { get; set; } = "";
         public List<AnswerOptionDto> AnswerOptions { get; set; } = new();
+        public bool IsLastQuestion { get; set; }
     }
 }

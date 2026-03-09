@@ -12,5 +12,6 @@ namespace CyberQuiz.Shared.DTOs.Progress
         public int CompletedSubCategoriesCount { get; set; }
         
         public int TotalSubCategoriesCount { get; set; }
+        public int ProgressPercent { get; set; }
     }
 }

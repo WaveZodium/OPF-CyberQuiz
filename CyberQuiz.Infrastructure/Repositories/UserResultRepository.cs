@@ -92,4 +92,27 @@ public class UserResultRepository : IUserResultRepository
             .Distinct()
             .ToListAsync();
     }
+
+    public async Task<int> CountTotalAnswersForUserAsync(string userId)
+    {
+        return await _context.UserResults
+            .Where(ur => ur.UserId == userId)
+            .CountAsync();
+    }
+
+    public async Task<int> CountCorrectAnswersForUserAsync(string userId)
+    {
+        return await _context.UserResults
+            .Where(ur => ur.UserId == userId && ur.IsCorrect)
+            .CountAsync();
+    }
+
+    public async Task<int> CountDistinctQuestionsAttemptedForUserAsync(string userId)
+    {
+        return await _context.UserResults
+            .Where(ur => ur.UserId == userId)
+            .Select(ur => ur.QuestionId)
+            .Distinct()
+            .CountAsync();
+    }
 }

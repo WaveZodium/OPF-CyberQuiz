@@ -12,5 +12,6 @@ namespace CyberQuiz.Application.Interfaces
         Task<QuestionDto?> GetNextQuestionAsync(int subCategoryId, string userId);
         Task<SubmitAnswerResponseDto> SubmitAnswerAsync(SubmitAnswerRequestDto dto, string userId);
         Task<List<QuestionReviewDto>> GetSubCategoryReviewAsync(int subCategoryId, string userId);
+        Task ResetSubCategoryProgressAsync(int subCategoryId, string userId);
     }
 }

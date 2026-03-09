@@ -42,6 +42,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddIdentityCookies();
 
+builder.Services.AddAuthorization();
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = ".CyberQuiz.Auth";
@@ -66,7 +68,15 @@ builder.Services.AddScoped<IUserResultRepository, UserResultRepository>();
 // Register Services
 builder.Services.AddScoped<IProgressCalculator, ProgressCalculator>();
 builder.Services.AddScoped<IQuizService, QuizService>();
+// Register AI coach service
+builder.Services.AddScoped<IAICoachService, AICoachService>();
 
+// Register HttpClient for Ollama
+builder.Services.AddHttpClient("Ollama", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:11434");
+    client.Timeout = TimeSpan.FromMinutes(2); // AI responses may take longer
+});
 
 
 // Add CORS

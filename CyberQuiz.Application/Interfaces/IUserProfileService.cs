@@ -6,6 +6,6 @@ namespace CyberQuiz.Application.Interfaces
     public interface IUserProfileService
     {
         Task<UserProfileDto> GetUserProfileAsync(string userId);
-        Task<List<Shared.DTOs.Profile.CategoryProgressDto>> GetUserProgressByAllCategoriesAsync(string userId);
+        Task<List<CategoryProgressDto>> GetUserProgressByAllCategoriesAsync(string userId);
     }
 }

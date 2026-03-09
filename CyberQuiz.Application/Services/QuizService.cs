@@ -68,6 +68,7 @@ namespace CyberQuiz.Application.Services
                         IsLocked = isLocked,
                         IsCompleted = progress.IsCompleted,
                         PercentCorrect = progress.PercentCorrect,
+                        ProgressPercent = progress.ProgressPercent,
                         TotalQuestions = progress.TotalQuestions
                     });
                     // updates the previousCompleted variable for the next iteration, if the current subcategory is not completed, the next one will be locked

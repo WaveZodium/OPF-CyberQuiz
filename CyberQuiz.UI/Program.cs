@@ -5,9 +5,14 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Share data protection keys between the API and UI projects.
+// The folder is created in the solution root and both projects reference it,
+// so they can read/write keys to the same location.
+// This allows the UI to decrypt the authentication cookie created by the API.
 var keyPath = Path.Combine(builder.Environment.ContentRootPath, "..", "shared-keys");
 Directory.CreateDirectory(keyPath);
 
+// Configure data protection to use the shared key storage and set a common application name.
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
     .SetApplicationName("CyberQuiz");
@@ -16,6 +21,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Configure authentication to use the same cookie scheme as the API.
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddCookie(IdentityConstants.ApplicationScheme, options =>
     {
@@ -39,6 +45,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 
     client.BaseAddress = new Uri(baseUrl);
 })
+// Add the cookie forwarding handler to ensure authentication cookies are included in API requests.
 .AddHttpMessageHandler<CookieForwardingHandler>();
 
 var app = builder.Build();

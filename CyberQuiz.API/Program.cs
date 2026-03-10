@@ -44,6 +44,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// Configure authentication cookie
+// The cookie name and settings must match those configured in the UI project
+// to ensure proper authentication flow.
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = ".CyberQuiz.Auth";

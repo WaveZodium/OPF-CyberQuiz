@@ -1,4 +1,4 @@
-﻿@page "/review/{subCategoryId:int}"
+﻿    @page "/review/{subCategoryId:int}"
 @using CyberQuiz.Shared.DTOs.Catalog
 @using CyberQuiz.Shared.DTOs.Progress
 @using CyberQuiz.Shared.DTOs.Quiz
@@ -30,6 +30,11 @@ else
                       GroupName="@($"review-{review.QuestionId}")"
                       AriaLabel="@($"Answers for question {review.QuestionId}")"
                       IsReadOnly="true" />
+
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2">
+            Explain with AI
+        </button>
+
         <br /><br />
     }
 }

@@ -1,0 +1,84 @@
+﻿@page "/review/{subCategoryId:int}"
+@using CyberQuiz.Shared.DTOs.Catalog
+@using CyberQuiz.Shared.DTOs.Progress
+@using CyberQuiz.Shared.DTOs.Quiz
+@using CyberQuiz.UI.Services
+@using CyberQuiz.UI.Models
+@using CyberQuiz.UI.Components.Shared
+@inject IApiClient ApiClient
+
+<NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
+
+<h3>Review</h3>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="text-danger">@errorMessage</div>
+}
+else if (ReviewData is null)
+{
+    <div>Loading...</div>
+}
+else
+{
+    @foreach (var review in ReviewData)
+    {
+        <QuestionCard Title="@($"Question {review.QuestionId}")"
+                      QuestionText="@review.QuestionText"
+                      AnswerOptions="@GetReviewAnswerOptions(review)"
+                      SelectedAnswerOptionId="@review.SelectedAnswerOptionId"
+                      GroupName="@($"review-{review.QuestionId}")"
+                      AriaLabel="@($"Answers for question {review.QuestionId}")"
+                      IsReadOnly="true" />
+        <br /><br />
+    }
+}
+
+<br />
+
+@code {
+    [Parameter]
+    public int subCategoryId { get; set; }
+
+    private SubCategoryProgressDto? selectedCategory;
+    private string? errorMessage;
+    private int? categoryId;
+
+    public List<QuestionReviewDto>? ReviewData { get; set; } = new List<QuestionReviewDto>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            errorMessage = null;
+
+            ReviewData = await ApiClient.HttpClient
+                .GetFromJsonAsync<List<QuestionReviewDto>>("/api/quiz/review/" + subCategoryId)
+                ?? new List<QuestionReviewDto>();
+
+            var categories = await ApiClient.HttpClient
+                .GetFromJsonAsync<List<CategoryDto>>("api/categories")
+                ?? new List<CategoryDto>();
+
+            categoryId = categories
+                .FirstOrDefault(c => c.SubCategories.Any(sc => sc.Id == subCategoryId))
+                ?.Id;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            ReviewData = null;
+        }
+    }
+
+    private IReadOnlyList<AnswerOptionViewModel> GetReviewAnswerOptions(QuestionReviewDto review)
+        => review.AnswerOptions
+            .Select(option => new AnswerOptionViewModel
+            {
+                Id = option.Id,
+                Text = option.Text,
+                IsCorrect = option.IsCorrect,
+                IsSelectedByUser = option.IsSelectedByUser
+            })
+            .ToList();
+}

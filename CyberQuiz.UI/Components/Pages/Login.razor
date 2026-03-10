@@ -1,0 +1,117 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using CyberQuiz.UI.Services
+@using Microsoft.AspNetCore.Authorization
+@inject IApiClient Api
+@inject IJSRuntime Js
+@inject NavigationManager Nav
+@attribute [AllowAnonymous]
+
+<div class="login-page">
+    <div class="login-card">
+        <h3>Login</h3>
+
+        <EditForm Model="_model" OnValidSubmit="HandleLogin" OnInvalidSubmit="HandleInvalidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label for="identifier" class="form-label">Username or Email</label>
+                <InputText id="identifier" class="form-control" @bind-Value="_model.Identifier" />
+                <ValidationMessage For="@(() => _model.Identifier)" />
+            </div>
+
+            <div class="mb-2">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="_model.Password" />
+                <ValidationMessage For="@(() => _model.Password)" />
+            </div>
+
+            <div class="mb-3">
+                <NavLink class="btn btn-link p-0" href="/forgot-password">Forgot password?</NavLink>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+                <button type="submit" class="btn btn-primary">
+                    @(_isSubmitting ? "Logging in..." : "Login")
+                </button>
+                <NavLink class="btn btn-secondary" href="/register">Register</NavLink>
+            </div>
+
+            @if (_statusMessage is not null)
+            {
+                <div class="alert alert-success mt-3" role="status">@_statusMessage</div>
+            }
+
+            @if (_errorMessage is not null)
+            {
+                <div class="alert alert-danger mt-3" role="alert">@_errorMessage</div>
+            }
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private readonly LoginModel _model = new();
+    private bool _isSubmitting;
+    private string? _statusMessage;
+    private string? _errorMessage;
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = null;
+        _statusMessage = null;
+        _isSubmitting = true;
+
+        var request = new LoginRequest(_model.Identifier, _model.Password);
+        var url = new Uri(Api.HttpClient.BaseAddress!, "api/auth/login");
+
+        try
+        {
+            await Js.InvokeAsync<bool>("cyberQuizAuth.postJson", url.ToString(), request);
+            _statusMessage = "Logged in.";
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Login failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void HandleInvalidSubmit(EditContext editContext)
+    {
+        _statusMessage = null;
+
+        var invalidFields = new List<string>();
+
+        if (editContext.GetValidationMessages(() => _model.Identifier).Any())
+        {
+            invalidFields.Add("Username/Email");
+        }
+
+        if (editContext.GetValidationMessages(() => _model.Password).Any())
+        {
+            invalidFields.Add("Password");
+        }
+
+        _errorMessage = invalidFields.Count == 0
+            ? "Please correct the highlighted fields."
+            : $"Please check: {string.Join(", ", invalidFields)}.";
+    }
+    
+    private sealed class LoginModel
+    {
+        [Required]
+        public string Identifier { get; set; } = string.Empty;
+
+        [Required, MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private sealed record LoginRequest(string Identifier, string Password);
+}

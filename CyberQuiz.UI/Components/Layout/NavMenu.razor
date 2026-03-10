@@ -1,6 +1,6 @@
-﻿@implements IDisposable
-
-@inject NavigationManager NavigationManager
+﻿@using CyberQuiz.UI.Services
+@inject NavigationManager Nav
+@rendermode InteractiveServer
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -11,57 +11,51 @@
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+    <nav class="nav flex-column nav-menu-content">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
-
         <AuthorizeView>
-            <Authorized>
+            <Authorized Context="authState">
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                    <NavLink class="nav-link" href="categories">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Categories
                     </NavLink>
                 </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
+
+                @if (authState.User.IsInRole("Admin"))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin">Admin</NavLink>
+                    </div>
+                }
+
+                <div class="nav-item px-3 profile-nav-item" @onclick:stopPropagation="true">
+                    <button type="button"
+                            class="profile-toggle"
+                            title="@authState.User.Identity?.Name"
+                            @onclick="ToggleProfileMenu"
+                            @onclick:stopPropagation="true">
+                        <span class="bi profile-icon" aria-hidden="true" style="margin-left: 16px;"></span> Account
+                    </button>
+
+                    @if (isProfileMenuOpen)
+                    {
+                        <div class="profile-popup-menu" @onclick:stopPropagation="true">
+                            <NavLink class="profile-popup-item" href="profile">Profile</NavLink>
+                            <NavLink class="profile-popup-item" href="logout">Logout</NavLink>
+                        </div>
+                    }
                 </div>
             </Authorized>
+
             <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                <div class="nav-item px-3 guest-login-nav-item">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
                     </NavLink>
                 </div>
             </NotAuthorized>
@@ -70,23 +64,10 @@
 </div>
 
 @code {
-    private string? currentUrl;
+    private bool isProfileMenuOpen;
 
-    protected override void OnInitialized()
+    private void ToggleProfileMenu()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        isProfileMenuOpen = !isProfileMenuOpen;
     }
 }
-

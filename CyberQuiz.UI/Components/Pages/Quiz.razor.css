@@ -1,0 +1,24 @@
+.quiz-page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.question-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.answer-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.answer-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}

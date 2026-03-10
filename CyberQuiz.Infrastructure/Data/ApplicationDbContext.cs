@@ -1,3 +1,4 @@
+using CyberQuiz.Infrastructure.Data.Seed;
 using CyberQuiz.Infrastructure.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -129,6 +130,11 @@ namespace CyberQuiz.Infrastructure.Data
                     .HasForeignKey(r => r.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+            //kopplar seed-data till våra entiteter så att det fylls på i databasen när vi kör migrationer.
+            builder.Entity<Category>().HasData(QuizSeedData.Categories);
+            builder.Entity<SubCategory>().HasData(QuizSeedData.SubCategories);
+            builder.Entity<Question>().HasData(QuizSeedData.Questions);
+            builder.Entity<AnswerOption>().HasData(QuizSeedData.AnswerOptions);
         }
     }
 }

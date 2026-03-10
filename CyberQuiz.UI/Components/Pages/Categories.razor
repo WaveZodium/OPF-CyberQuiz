@@ -1,0 +1,66 @@
+﻿@page "/categories"
+@using System.Net.Http.Json
+@using CyberQuiz.Shared.DTOs.Catalog
+@using CyberQuiz.UI.Services
+@inject IApiClient ApiClient
+
+<PageTitle>Categories</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="categories-page">
+            <h3 class="mb-4">Choose a category</h3>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <div class="row g-3">
+                @foreach (var category in categories)
+                {
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <NavLink class="category-card-link text-decoration-none" href="@($"categories/{category.Id}")">
+                            <div class="card category-card h-100">
+                                <div class="card-body d-flex flex-column gap-2">
+                                    <div>
+                                        <h5 class="card-title mb-1">@category.Name</h5>
+                                        <div class="card-text text-secondary small">@category.SubCategories.Count subcategories</div>
+                                    </div>
+
+                                    <div class="category-meta mt-auto">
+                                        <span class="badge text-bg-primary">@category.SubCategories.Sum(sc => sc.TotalQuestions) questions</span>
+                                        <span class="badge text-bg-secondary">@category.SubCategories.Count subcategories</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </NavLink>
+                    </div>
+                }
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You must be logged in to view this page.</p>
+        <NavLink class="btn btn-primary" href="login">Go to Login</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<CategoryDto> categories = [];
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await ApiClient.HttpClient.GetFromJsonAsync<List<CategoryDto>>("api/categories");
+            categories = result ?? [];
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            categories = [];
+        }
+    }
+}

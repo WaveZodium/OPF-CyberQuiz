@@ -1,0 +1,25 @@
+@page "/auth-status"
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Auth Status</PageTitle>
+
+<h3>Auth Status</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p class="text-success fw-semibold">Authenticated</p>
+
+        <p><strong>User:</strong> @context.User.Identity?.Name</p>
+
+        <h5 class="mt-3">Claims</h5>
+        <ul>
+            @foreach (var claim in context.User.Claims)
+            {
+                <li>@claim.Type: @claim.Value</li>
+            }
+        </ul>
+    </Authorized>
+    <NotAuthorized>
+        <p class="text-danger fw-semibold">Not authenticated</p>
+    </NotAuthorized>
+</AuthorizeView>

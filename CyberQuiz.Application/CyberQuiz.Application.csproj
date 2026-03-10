@@ -7,13 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CyberQuiz.Infrastructure\CyberQuiz.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\" />
-    <Folder Include="Interfaces\" />
-    <Folder Include="Services\" />
+    <ProjectReference Include="..\CyberQuiz.Infrastructure\CyberQuiz.Infrastructure.csproj" />
+    <ProjectReference Include="..\CyberQuiz.Shared\CyberQuiz.Shared.csproj" />
   </ItemGroup>
 
 </Project>

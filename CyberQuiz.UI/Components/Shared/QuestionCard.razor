@@ -1,0 +1,63 @@
+@using CyberQuiz.UI.Models
+
+<div class="card question-card">
+    <div class="card-body">
+        <h5 class="card-title">@Title</h5>
+        <p class="card-text">@QuestionText</p>
+
+        <fieldset class="answer-group" aria-label="@AriaLabel">
+            @foreach (var option in AnswerOptions)
+            {
+                <label class="answer-option">
+                    <input type="radio"
+                           name="@GroupName"
+                           value="@option.Id"
+                           checked="@IsSelected(option.Id)"
+                           disabled="@IsReadOnly"
+                           @onchange="@(() => OnOptionChangedAsync(option.Id))" />
+                    <span>@option.Text</span>
+
+                    @if (IsReadOnly && option.IsCorrect)
+                    {
+                        <span class="badge bg-success ms-2">Correct</span>
+                    }
+                    @if (IsReadOnly && option.IsSelectedByUser)
+                    {
+                        <span class="badge bg-primary ms-2">Selected</span>
+                    }
+                </label>
+                <br />
+            }
+        </fieldset>
+
+        @if (ActionContent is not null)
+        {
+            <div class="d-flex gap-2 mt-3">
+                @ActionContent
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string QuestionText { get; set; } = "";
+    [Parameter] public IReadOnlyList<AnswerOptionViewModel> AnswerOptions { get; set; } = [];
+    [Parameter] public int? SelectedAnswerOptionId { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; }
+    [Parameter] public string GroupName { get; set; } = "";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+    [Parameter] public EventCallback<int> OnSelectOption { get; set; }
+
+    private bool IsSelected(int optionId)
+        => SelectedAnswerOptionId.HasValue && SelectedAnswerOptionId.Value == optionId;
+
+    private async Task OnOptionChangedAsync(int optionId)
+    {
+        if (IsReadOnly)
+            return;
+
+        await OnSelectOption.InvokeAsync(optionId);
+    }
+}

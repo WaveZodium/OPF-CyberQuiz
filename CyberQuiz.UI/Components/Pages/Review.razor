@@ -9,72 +9,83 @@
 @inject IApiClient ApiClient
 @inject NavigationManager Navigation
 
-<NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
+<div class="review-page page-content">
+    <NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
 
-<h3>Review</h3>
+    <h3>Review</h3>
 
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="text-danger">@errorMessage</div>
-}
-else if (ReviewData is null)
-{
-    <div>Loading...</div>
-}
-else
-{
-    <div class="card mb-3">
-        <div class="card-body py-2">
-            <div class="row text-center">
-                <div class="col">
-                    <div class="fw-semibold">Questions</div>
-                    <div>@TotalQuestions</div>
-                </div>
-                <div class="col">
-                    <div class="fw-semibold text-success">Correct</div>
-                    <div>@CorrectCount</div>
-                </div>
-                <div class="col">
-                    <div class="fw-semibold text-danger">Incorrect</div>
-                    <div>@IncorrectCount</div>
-                </div>
-                <div class="col">
-                    <div class="fw-semibold text-secondary">Unanswered</div>
-                    <div>@UnansweredCount</div>
-                </div>
-                <div class="col">
-                    <div class="fw-semibold">Score</div>
-                    <div>@ScorePercent%</div>
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="text-danger">@errorMessage</div>
+    }
+    else if (ReviewData is null)
+    {
+        <div>Loading...</div>
+    }
+    else
+    {
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="fw-semibold">Questions</div>
+                        <div>@TotalQuestions</div>
+                    </div>
+                    <div class="col">
+                        <div class="fw-semibold text-success">Correct</div>
+                        <div>@CorrectCount</div>
+                    </div>
+                    <div class="col">
+                        <div class="fw-semibold text-danger">Incorrect</div>
+                        <div>@IncorrectCount</div>
+                    </div>
+                    <div class="col">
+                        <div class="fw-semibold text-secondary">Unanswered</div>
+                        <div>@UnansweredCount</div>
+                    </div>
+                    <div class="col">
+                        <div class="fw-semibold">Score</div>
+                        <div>@ScorePercent%</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    @foreach (var review in ReviewData)
-    {
-        <QuestionCard Title="@($"Question {review.QuestionId}")"
-                      QuestionText="@review.QuestionText"
-                      AnswerOptions="@GetReviewAnswerOptions(review)"
-                      SelectedAnswerOptionId="@review.SelectedAnswerOptionId"
-                      GroupName="@($"review-{review.QuestionId}")"
-                      AriaLabel="@($"Answers for question {review.QuestionId}")"
-                      IsReadOnly="true" />
+        @foreach (var review in ReviewData)
+        {
+            <QuestionCard Title="@($"Question {review.OrderIndex}")"
+                          QuestionText="@review.QuestionText"
+                          AnswerOptions="@GetReviewAnswerOptions(review)"
+                          SelectedAnswerOptionId="@review.SelectedAnswerOptionId"
+                          GroupName="@($"review-{review.QuestionId}")"
+                          AriaLabel="@($"Answers for question {review.QuestionId}")"
+                          IsReadOnly="true" />
 
-        <button type="button" class="btn btn-outline-primary btn-sm mt-2">
-            Explain with AI
+            @if (!string.IsNullOrWhiteSpace(review.Explanation))
+            {
+                <div class="card explanation-card mb-3 mt-2">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge rounded-pill bg-info-subtle text-info me-2">Explanation</span>
+                            <span class="small text-secondary">Why this is the right answer</span>
+                        </div>
+                        <div class="explanation-text">@review.Explanation</div>
+                    </div>
+                </div>
+            }
+
+            <br />
+        }
+
+        <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">
+            Reset quiz and try again
         </button>
-
-        <br /><br />
+        <br />
+        <br />
     }
 
-    <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">
-        Reset quiz and try again
-    </button>
     <br />
-    <br />
-}
-
-<br />
+</div>
 
 @code {
     [Parameter]

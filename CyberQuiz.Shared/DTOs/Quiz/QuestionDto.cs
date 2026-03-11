@@ -10,6 +10,6 @@ namespace CyberQuiz.Shared.DTOs.Quiz
         public string Text { get; set; } = "";
         public List<AnswerOptionDto> AnswerOptions { get; set; } = new();
         public bool IsLastQuestion { get; set; }
-        public bool IsLastSubCategory { get; set; }
+        public int OrderIndex { get; set; }
     }
 }

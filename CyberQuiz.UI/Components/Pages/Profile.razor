@@ -1,0 +1,184 @@
+﻿@page "/profile"
+@using System.Net.Http.Json
+@using CyberQuiz.Shared.DTOs.Profile
+@using CyberQuiz.Shared.DTOs.Progress
+@using CyberQuiz.UI.Services
+@inject IApiClient ApiClient
+
+<PageTitle>Profile</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="profile-page page-content">
+            <h3 class="mb-3">Profile</h3>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+            else if (profile is null)
+            {
+                <div class="alert alert-info">Loading profile...</div>
+            }
+            else
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <div class="fw-semibold">Username</div>
+                                <div>@profile.UserName</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="fw-semibold">Email</div>
+                                <div>@profile.Email</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="fw-semibold">Member since</div>
+                                <div>@profile.MemberSince.ToString("yyyy-MM-dd")</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="fw-semibold">Completed subcategories</div>
+                                <div>@profile.CompletedSubCategories / @profile.TotalSubCategories</div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row text-center">
+                            <div class="col">
+                                <div class="fw-semibold">Questions attempted</div>
+                                <div>@profile.TotalQuestionsAttempted</div>
+                            </div>
+                            <div class="col">
+                                <div class="fw-semibold text-success">Correct answers</div>
+                                <div>@profile.TotalCorrectAnswers</div>
+                            </div>
+                            <div class="col">
+                                <div class="fw-semibold">Accuracy</div>
+                                <div>@profile.OverallAccuracy.ToString("0.#")%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+
+                <h4 class="mb-3">Category progress</h4>
+
+                @if (categoryProgress.Count == 0)
+                {
+                    <div class="alert alert-info">No progress yet.</div>
+                }
+                else
+                {
+                    @foreach (var category in categoryProgress)
+                    {
+                        var categoryPercent = ClampPercent(category.CategoryCompletionPercent);
+                        var categoryPercentLabel = $"{categoryPercent:0.#}%";
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <h5 class="mb-1">@category.CategoryName</h5>
+                                        <div class="text-secondary small">
+                                            Completed @category.CompletedSubCategoriesCount of @category.TotalSubCategoriesCount subcategories
+                                        </div>
+                                    </div>
+                                    <span class="badge text-bg-primary">@categoryPercentLabel</span>
+                                </div>
+
+                                <div class="progress mt-3 position-relative" role="progressbar"
+                                     aria-valuenow="@categoryPercent"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar progress-animate" style="--progress-value: @categoryPercentLabel"></div>
+                                    <span class="position-absolute w-100 text-center small fw-semibold text-dark">
+                                        @categoryPercentLabel
+                                    </span>
+                                </div>
+
+                                <div class="mt-3">
+                                    @foreach (var sub in category.SubCategories)
+                                    {
+                                        var answeredPercent = ClampPercent(sub.ProgressPercent);
+                                        var correctPercent = ClampPercent(sub.PercentCorrect);
+                                        var answeredPercentLabel = $"{answeredPercent:0.#}%";
+                                        var correctPercentLabel = $"{correctPercent:0.#}%";
+
+                                        <div class="border-top py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="fw-semibold">@sub.SubCategoryName</div>
+                                                    <div class="small text-secondary">
+                                                        Answered: @sub.ProgressPercent.ToString("0.#")% ·
+                                                        Correct: @sub.PercentCorrect.ToString("0.#")%
+                                                    </div>
+                                                </div>
+                                                <div class="text-end small text-secondary">
+                                                    @sub.TotalQuestions questions
+                                                </div>
+                                            </div>
+
+                                            <div class="progress mt-2 position-relative" role="progressbar"
+                                                 aria-valuenow="@answeredPercent"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                                <div class="progress-bar bg-info progress-animate" style="--progress-value: @answeredPercentLabel"></div>
+                                                <span class="position-absolute w-100 text-center small fw-semibold text-dark">
+                                                    Answered @answeredPercentLabel
+                                                </span>
+                                            </div>
+
+                                            <div class="progress mt-2 position-relative" role="progressbar"
+                                                 aria-valuenow="@correctPercent"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                                <div class="progress-bar bg-success progress-animate" style="--progress-value: @correctPercentLabel"></div>
+                                                <span class="position-absolute w-100 text-center small fw-semibold text-dark">
+                                                    Correct @correctPercentLabel
+                                                </span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You must be logged in to view this page.</p>
+        <NavLink class="btn btn-primary" href="/login">Go to Login</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private UserProfileDto? profile;
+    private List<CategoryProgressDto> categoryProgress = [];
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            errorMessage = null;
+
+            profile = await ApiClient.HttpClient.GetFromJsonAsync<UserProfileDto>("api/profile");
+            categoryProgress = await ApiClient.HttpClient
+                .GetFromJsonAsync<List<CategoryProgressDto>>("api/profile/categories")
+                ?? [];
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            profile = null;
+            categoryProgress = [];
+        }
+    }
+
+    private static decimal ClampPercent(decimal value)
+        => Math.Clamp(value, 0m, 100m);
+}

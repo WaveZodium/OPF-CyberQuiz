@@ -58,7 +58,7 @@ namespace CyberQuiz.Application.Services
                     // Recives the progress for the subcategory and user
                     var progress = await _progress.GetSubCategoryProgressAsync(sub.Id, userId);
 
-                    bool isLocked = !previousCompleted; // A subcategory is locked if the previous one is not completed
+                    bool isLocked = !previousCompleted && !progress.HasAttemptedAllQuestions; // Lock only if previous is incomplete AND this subcategory is not fully answered
 
                     subCategoryDtos.Add(new SubCategoryDto
                     {
@@ -121,12 +121,6 @@ namespace CyberQuiz.Application.Services
                 var currentIndex = orderedSubCategories.FindIndex(s => s.Id == subCategoryId);
                 var hasMoreSubCategories = currentIndex >= 0 && currentIndex < orderedSubCategories.Count - 1;
 
-                if (!hasMoreSubCategories)
-                {
-                    // Last subcategory - no more questions in entire category
-                    throw new DomainException("No more questions available in this category. You have completed all subcategories!");
-                }
-
                 // More subcategories exist - subcategory completed
                 return null;
             }
@@ -155,6 +149,7 @@ namespace CyberQuiz.Application.Services
             {
                 QuestionId = nextQuestion.Id,
                 Text = nextQuestion.Text,
+                OrderIndex = nextQuestion.OrderIndex,
                 AnswerOptions = options.Select(o => new AnswerOptionDto
                 {
                     Id = o.Id,
@@ -267,10 +262,12 @@ namespace CyberQuiz.Application.Services
                 {
                     QuestionId = question.Id,
                     QuestionText = question.Text,
+                    OrderIndex = question.OrderIndex,
                     SelectedAnswerOptionId = userResult.SelectedAnswerOptionId,
                     CorrectAnswerOptionId = correctOption?.Id,
                     AnswerOptions = answerOptionReviews,
-                    IsCorrect = userResult.IsCorrect
+                    IsCorrect = userResult.IsCorrect,
+                    Explanation = question.Explanation
                 });
             }
 

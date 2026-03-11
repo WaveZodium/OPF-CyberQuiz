@@ -42,8 +42,7 @@
                         <span class="bi profile-icon" aria-hidden="true" style="margin-left: 16px;"></span> Account
                     </button>
 
-                    @if (isProfileMenuOpen)
-                    {
+                    @if (isProfileMenuOpen) {
                         <div class="profile-popup-menu" @onclick:stopPropagation="true">
                             <NavLink class="profile-popup-item" href="profile">Profile</NavLink>
                             <NavLink class="profile-popup-item" href="logout">Logout</NavLink>
@@ -53,9 +52,9 @@
             </Authorized>
 
             <NotAuthorized>
-                <div class="nav-item px-3 guest-login-nav-item">
+                <div class="nav-item px-3 profile-nav-item" @onclick:stopPropagation="true">
                     <NavLink class="nav-link" href="login">
-                        <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+                        <span class="bi profile-icon" aria-hidden="true"></span> Login
                     </NavLink>
                 </div>
             </NotAuthorized>

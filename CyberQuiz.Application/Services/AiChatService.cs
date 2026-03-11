@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using CyberQuiz.Application.Interfaces;
 using CyberQuiz.Shared.DTOs.AiChat;
+using CyberQuiz.Shared.Exceptions;
 
 namespace CyberQuiz.Application.Services
 {
@@ -17,29 +18,38 @@ namespace CyberQuiz.Application.Services
         public async Task<ChatResponseDto> SendMessageAsync(ChatRequestDto request)
         {
             if (request is null)
-                throw new ArgumentNullException(nameof(request));
+                throw new ValidationException("Request cannot be null.");
 
             if (string.IsNullOrWhiteSpace(request.Message))
-                throw new ArgumentException("Message cannot be empty.");
+                throw new ValidationException("Message cannot be empty.");
+
+            if (request.Message.Length > 2000)
+                throw new ValidationException("Message is too long.");
 
             var messages = new List<OllamaMessage>
             {
                 new()
                 {
                     Role = "system",
-                    Content = "You are a helpful cybersecurity tutor. Answer clearly, simply, and briefly."
+                    Content = """
+                              You are a helpful cybersecurity tutor.
+                              Answer in simple English.
+                              Keep answers short, clear, and practical.
+                              Avoid long introductions, long lists, and unnecessary detail.
+                              """
                 }
             };
 
             if (request.History is not null && request.History.Count > 0)
             {
-                messages.AddRange(request.History
-                    .Where(m => !string.IsNullOrWhiteSpace(m.Content))
-                    .Select(m => new OllamaMessage
-                    {
-                        Role = NormalizeRole(m.Role),
-                        Content = m.Content.Trim()
-                    }));
+                messages.AddRange(
+                    request.History
+                        .Where(m => !string.IsNullOrWhiteSpace(m.Content))
+                        .Select(m => new OllamaMessage
+                        {
+                            Role = NormalizeRole(m.Role),
+                            Content = m.Content.Trim()
+                        }));
             }
 
             messages.Add(new OllamaMessage
@@ -55,30 +65,53 @@ namespace CyberQuiz.Application.Services
                 Messages = messages
             };
 
-            using var response = await _httpClient.PostAsJsonAsync("/api/chat", ollamaRequest);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Ollama error: {error}");
+                using var response = await _httpClient.PostAsJsonAsync("/api/chat", ollamaRequest);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new DomainException($"AI service failed: {error}");
+                }
+
+                var result = await response.Content.ReadFromJsonAsync<OllamaChatResponse>();
+                var reply = result?.Message?.Content?.Trim();
+
+                if (string.IsNullOrWhiteSpace(reply))
+                    throw new DomainException("AI service returned an empty response.");
+
+                return new ChatResponseDto
+                {
+                    Reply = reply
+                };
             }
-
-            var result = await response.Content.ReadFromJsonAsync<OllamaChatResponse>();
-
-            return new ChatResponseDto
+            catch (DomainException)
             {
-                Reply = result?.Message?.Content?.Trim() ?? "No response from AI."
-            };
+                throw;
+            }
+            catch (HttpRequestException)
+            {
+                throw new DomainException("AI service is temporarily unavailable.");
+            }
+            catch (TaskCanceledException)
+            {
+                throw new DomainException("AI service timed out.");
+            }
         }
 
         public async Task<ChatResponseDto> GetQuizHelpAsync(QuizHelpRequestDto request)
         {
             if (request is null)
-                throw new ArgumentNullException(nameof(request));
+                throw new ValidationException("Request cannot be null.");
+
+            if (string.IsNullOrWhiteSpace(request.QuestionText))
+                throw new ValidationException("Question text is required.");
+
+            if (string.IsNullOrWhiteSpace(request.CorrectAnswer))
+                throw new ValidationException("Correct answer is required.");
 
             var prompt = $"""
-                You are a helpful cybersecurity tutor for a quiz application.
-
                 Explain this quiz question in simple English.
 
                 Question:
@@ -93,12 +126,13 @@ namespace CyberQuiz.Application.Services
                 Extra explanation from database:
                 {request.Explanation ?? "No extra explanation"}
 
-                Your task:
-                1. Explain why the correct answer is right.
-                2. Explain why the user's answer is wrong, if they answered incorrectly.
-                3. Give a short tip for how to remember it next time.
-
-                Keep the answer short, clear, and friendly.
+                Rules:
+                - Maximum 3 short paragraphs
+                - Maximum 90 words total
+                - Be clear and practical
+                - Do not use bullet points
+                - Do not repeat the full question
+                - Focus only on why the correct answer is right, why the user's answer is wrong, and one short memory tip
                 """;
 
             var ollamaRequest = new OllamaChatRequest
@@ -110,7 +144,13 @@ namespace CyberQuiz.Application.Services
                     new()
                     {
                         Role = "system",
-                        Content = "You are a helpful cybersecurity tutor."
+                        Content = """
+                                  You are a helpful cybersecurity tutor for a quiz application.
+                                  Write short, clear, practical explanations in simple English.
+                                  Do not give long lectures.
+                                  Do not use long lists.
+                                  Keep the answer concise and easy to read in a small UI card.
+                                  """
                     },
                     new()
                     {
@@ -120,25 +160,44 @@ namespace CyberQuiz.Application.Services
                 }
             };
 
-            using var response = await _httpClient.PostAsJsonAsync("/api/chat", ollamaRequest);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Ollama error: {error}");
+                using var response = await _httpClient.PostAsJsonAsync("/api/chat", ollamaRequest);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new DomainException($"AI service failed: {error}");
+                }
+
+                var result = await response.Content.ReadFromJsonAsync<OllamaChatResponse>();
+                var reply = result?.Message?.Content?.Trim();
+
+                if (string.IsNullOrWhiteSpace(reply))
+                    throw new DomainException("AI service returned an empty response.");
+
+                return new ChatResponseDto
+                {
+                    Reply = reply
+                };
             }
-
-            var result = await response.Content.ReadFromJsonAsync<OllamaChatResponse>();
-
-            return new ChatResponseDto
+            catch (DomainException)
             {
-                Reply = result?.Message?.Content?.Trim() ?? "No response from AI."
-            };
+                throw;
+            }
+            catch (HttpRequestException)
+            {
+                throw new DomainException("AI service is temporarily unavailable.");
+            }
+            catch (TaskCanceledException)
+            {
+                throw new DomainException("AI service timed out.");
+            }
         }
 
         private static string NormalizeRole(string? role)
         {
-            return role?.Trim().ToLower() switch
+            return role?.Trim().ToLowerInvariant() switch
             {
                 "assistant" => "assistant",
                 "system" => "system",

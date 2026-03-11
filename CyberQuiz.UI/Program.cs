@@ -44,6 +44,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
         ?? throw new InvalidOperationException("Api:BaseUrl is missing from configuration.");
 
     client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromMinutes(5);
 })
 // Add the cookie forwarding handler to ensure authentication cookies are included in API requests.
 .AddHttpMessageHandler<CookieForwardingHandler>();

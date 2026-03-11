@@ -1,7 +1,8 @@
 using CyberQuiz.Infrastructure.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CyberQuiz.API.Controllers;
 
@@ -62,7 +63,6 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
         return Ok();
     }
 
-
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
@@ -85,10 +85,40 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
         }
 
         return Ok(new { message = "Password has been reset successfully." });
+    }
 
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return Unauthorized("User not found.");
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return Unauthorized("User not found.");
+        }
+
+        var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors
+                .GroupBy(e => e.Code)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray());
+
+            return BadRequest(new ValidationProblemDetails(errors));
+        }
+
+        return Ok(new { message = "Password changed successfully." });
     }
 
     public sealed record LoginRequest(string Identifier, string Password);
     public sealed record RegisterRequest(string UserName, string Email, string Password);
     public sealed record ResetPasswordRequest(string Email, string NewPassword);
+    public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 }

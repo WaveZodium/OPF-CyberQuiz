@@ -66,15 +66,16 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
+        // Find the user by email
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null)
         {
             return BadRequest("User not found.");
         }
-
+        // Generate a password and reset the password
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
         var result = await userManager.ResetPasswordAsync(user, token, request.NewPassword);
-
+        // Check if the password reset was successful
         if (!result.Succeeded)
         {
             var errors = result.Errors
@@ -91,18 +92,20 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
     {
+        // Get the currently authenticated user
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
         {
             return Unauthorized("User not found.");
         }
 
+        // Retrieve the user from the database
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
             return Unauthorized("User not found.");
         }
-
+        // Verify current password and change to new password
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
 
         if (!result.Succeeded)

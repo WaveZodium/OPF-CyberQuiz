@@ -136,6 +136,21 @@ namespace CyberQuiz.Application.Services
 
             var unansweredQuestions = questions.Where(q => !answeredQuestionIds.Contains(q.Id)).ToList();// Get the list of unanswered questions for the subcategory
             bool isLastQuestion = unansweredQuestions.Count == 1; // If there is only one unanswered question, it means that the next question is the last one for the subcategory
+
+            // Check if this is the last subcategory in the category
+            bool isLastSubCategory = false;
+            if (isLastQuestion)
+            {
+                var subCategory = await _subCategoryRepo.GetByIdAsync(subCategoryId);
+                if (subCategory != null)
+                {
+                    var allSubCategories = await _subCategoryRepo.GetByCategoryAsync(subCategory.CategoryId);
+                    var orderedSubCategories = allSubCategories.OrderBy(s => s.OrderIndex).ToList();
+                    var currentIndex = orderedSubCategories.FindIndex(s => s.Id == subCategoryId);
+                    isLastSubCategory = currentIndex >= 0 && currentIndex >= orderedSubCategories.Count - 1;
+                }
+            }
+
             return new QuestionDto
             {
                 QuestionId = nextQuestion.Id,
@@ -145,7 +160,8 @@ namespace CyberQuiz.Application.Services
                     Id = o.Id,
                     Text = o.Text
                 }).ToList(),
-                IsLastQuestion = isLastQuestion
+                IsLastQuestion = isLastQuestion,
+                IsLastSubCategory = isLastSubCategory
             };
 
         }

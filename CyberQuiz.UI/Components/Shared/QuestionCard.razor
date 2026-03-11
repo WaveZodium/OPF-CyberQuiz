@@ -8,7 +8,7 @@
         <fieldset class="answer-group" aria-label="@AriaLabel">
             @foreach (var option in AnswerOptions)
             {
-                <label class="answer-option">
+                <label class="answer-option @GetOptionCss(option)">
                     <input type="radio"
                            name="@GroupName"
                            value="@option.Id"
@@ -21,12 +21,7 @@
                     {
                         <span class="badge bg-success ms-2">Correct</span>
                     }
-                    @if (IsReadOnly && option.IsSelectedByUser)
-                    {
-                        <span class="badge bg-primary ms-2">Selected</span>
-                    }
                 </label>
-                <br />
             }
         </fieldset>
 
@@ -71,5 +66,13 @@
         }
 
         return string.Join(" ", classes);
+    }
+
+    private string GetOptionCss(AnswerOptionViewModel option)
+    {
+        if (!IsReadOnly || !option.IsSelectedByUser)
+            return string.Empty;
+
+        return option.IsCorrect ? "answer-option--correct" : "answer-option--incorrect";
     }
 }

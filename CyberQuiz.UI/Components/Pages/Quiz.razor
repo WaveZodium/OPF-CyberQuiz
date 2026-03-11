@@ -39,6 +39,7 @@
                                       SelectedAnswerOptionId="@GetSelectedOptionId(question.QuestionId)"
                                       GroupName="@($"q-{question.QuestionId}")"
                                       AriaLabel="@($"Answers for question {i + 1}")"
+                                      IsReadOnly="@hasSubmittedCurrentQuestion"
                                       OnSelectOption="@((optionId) => SelectOption(question.QuestionId, optionId))">
                             <ActionContent>
                                 <button class="btn btn-primary"
@@ -57,14 +58,12 @@
                                 }
                                 else
                                 {
-                                <button class="btn btn-outline-primary"
-                                        @onclick="GoToNextQuestionAsync"
-                                        disabled="@(!hasSubmittedCurrentQuestion)">
-                                    Next question
-                                </button>
-
+                                    <button class="btn btn-outline-primary"
+                                            @onclick="GoToNextQuestionAsync"
+                                            disabled="@(!hasSubmittedCurrentQuestion)">
+                                        Next question
+                                    </button>
                                 }
-
                             </ActionContent>
                         </QuestionCard>
                     }
@@ -79,14 +78,6 @@
 </AuthorizeView>
 
 <br />
-@* <br />
-<h5>Debug</h5>
-subCategoryId: @SubCategoryId,
-<br />
-questionId: @questionId,
-<br />
-selectedAnswerOptionId: @selectedAnswerOptionId
-<br /> *@
 
 @code {
     [Parameter]
@@ -105,6 +96,8 @@ selectedAnswerOptionId: @selectedAnswerOptionId
 
     public int? questionId { get; set; }
     public int? selectedAnswerOptionId { get; set; }
+
+    private int? correctAnswerOptionId;
 
     private bool hasSelectedAnswer;
     private bool hasSubmittedCurrentQuestion;
@@ -145,6 +138,7 @@ selectedAnswerOptionId: @selectedAnswerOptionId
 
             questionId = nextQuestion?.QuestionId;
             selectedAnswerOptionId = null;
+            correctAnswerOptionId = null;
             hasSelectedAnswer = false;
             hasSubmittedCurrentQuestion = false;
         }
@@ -155,6 +149,7 @@ selectedAnswerOptionId: @selectedAnswerOptionId
             selectedAnswersByQuestion.Clear();
             questionId = null;
             selectedAnswerOptionId = null;
+            correctAnswerOptionId = null;
             hasSelectedAnswer = false;
             hasSubmittedCurrentQuestion = false;
         }
@@ -194,6 +189,9 @@ selectedAnswerOptionId: @selectedAnswerOptionId
                 return;
             }
 
+            var result = await response.Content.ReadFromJsonAsync<SubmitAnswerResponseDto>();
+            correctAnswerOptionId = result?.CorrectAnswerOptionId;
+
             hasSubmittedCurrentQuestion = true;
         }
         catch (Exception ex)
@@ -220,15 +218,21 @@ selectedAnswerOptionId: @selectedAnswerOptionId
     }
 
     private IReadOnlyList<AnswerOptionViewModel> GetAnswerOptions(QuestionDto question)
-        => question.AnswerOptions
+    {
+        var selectedOptionId = GetSelectedOptionId(question.QuestionId);
+
+        return question.AnswerOptions
             .Select(option => new AnswerOptionViewModel
             {
                 Id = option.Id,
                 Text = option.Text,
-                IsCorrect = false,
-                IsSelectedByUser = false
+                IsCorrect = hasSubmittedCurrentQuestion
+                            && correctAnswerOptionId.HasValue
+                            && option.Id == correctAnswerOptionId.Value,
+                IsSelectedByUser = selectedOptionId.HasValue && option.Id == selectedOptionId.Value
             })
             .ToList();
+    }
 
     private int? GetSelectedOptionId(int questionId)
         => selectedAnswersByQuestion.TryGetValue(questionId, out var selectedOptionId)

@@ -76,6 +76,13 @@ builder.Services.AddScoped<IAICoachService, AICoachService>();
 //user profile service
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
+//Register AI chat service
+builder.Services.AddHttpClient<IAiChatService, AiChatService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:11434");
+    client.Timeout = TimeSpan.FromMinutes(2);
+});
+
 // Register HttpClient for Ollama
 builder.Services.AddHttpClient("Ollama", client =>
 {

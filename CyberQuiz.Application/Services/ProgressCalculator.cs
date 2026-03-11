@@ -13,15 +13,23 @@ namespace CyberQuiz.Application.Services
     {
         private readonly IQuestionRepository _questionRepo;
         private readonly IUserResultRepository _userResultRepo;
+        private readonly ISubCategoryRepository _subCategoryRepo;
 
-        public ProgressCalculator(IQuestionRepository questionRepo, IUserResultRepository userResultRepo)
+        public ProgressCalculator(
+            IQuestionRepository questionRepo,
+            IUserResultRepository userResultRepo,
+            ISubCategoryRepository subCategoryRepo)
         {
             _questionRepo = questionRepo;
             _userResultRepo = userResultRepo;
+            _subCategoryRepo = subCategoryRepo;
         }
 
         public async Task<SubCategoryProgressDto> GetSubCategoryProgressAsync(int subCategoryId, string userId)
         {
+            var subCategory = await _subCategoryRepo.GetByIdAsync(subCategoryId);
+            var subCategoryName = subCategory?.Name ?? string.Empty;
+
             int totalQuestions = await _questionRepo.CountQuestionsInSubCategoryAsync(subCategoryId);
 
             if (totalQuestions == 0)
@@ -29,6 +37,7 @@ namespace CyberQuiz.Application.Services
                 return new SubCategoryProgressDto
                 {
                     SubCategoryId = subCategoryId,
+                    SubCategoryName = subCategoryName,
                     TotalQuestions = 0,
                     TotalAttempts = 0,
                     CorrectAttempts = 0,
@@ -56,6 +65,7 @@ namespace CyberQuiz.Application.Services
             return new SubCategoryProgressDto
             {
                 SubCategoryId = subCategoryId,
+                SubCategoryName = subCategoryName,
                 TotalQuestions = totalQuestions,
                 TotalAttempts = totalAttempts,
                 CorrectAttempts = correctAttempts,
@@ -65,8 +75,5 @@ namespace CyberQuiz.Application.Services
                 IsCompleted = isCompleted
             };
         }
-
-
-
     }
 }

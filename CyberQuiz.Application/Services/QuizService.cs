@@ -58,7 +58,7 @@ namespace CyberQuiz.Application.Services
                     // Recives the progress for the subcategory and user
                     var progress = await _progress.GetSubCategoryProgressAsync(sub.Id, userId);
 
-                    bool isLocked = !previousCompleted; // A subcategory is locked if the previous one is not completed
+                    bool isLocked = !previousCompleted && !progress.HasAttemptedAllQuestions; // Lock only if previous is incomplete AND this subcategory is not fully answered
 
                     subCategoryDtos.Add(new SubCategoryDto
                     {

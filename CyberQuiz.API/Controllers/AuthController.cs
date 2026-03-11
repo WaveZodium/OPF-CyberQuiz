@@ -1,5 +1,6 @@
 using CyberQuiz.Infrastructure.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CyberQuiz.API.Controllers;
@@ -61,6 +62,33 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
         return Ok();
     }
 
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+        {
+            return BadRequest("User not found.");
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, token, request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors
+                .GroupBy(e => e.Code)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray());
+
+            return BadRequest(new ValidationProblemDetails(errors));
+        }
+
+        return Ok(new { message = "Password has been reset successfully." });
+
+    }
+
     public sealed record LoginRequest(string Identifier, string Password);
     public sealed record RegisterRequest(string UserName, string Email, string Password);
+    public sealed record ResetPasswordRequest(string Email, string NewPassword);
 }

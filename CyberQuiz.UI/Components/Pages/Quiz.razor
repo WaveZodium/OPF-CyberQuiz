@@ -9,14 +9,14 @@
 @inject IApiClient ApiClient
 @inject NavigationManager Navigation
 
-<PageTitle>Questions</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <AuthorizeView>
     <Authorized>
         <div class="quiz-page">
             <NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories")">← Back to subcategories</NavLink>
 
-            <h3 class="mb-3">Questions</h3>
+            <h3 class="mb-3">@headingTitle</h3>
 
             @if (!string.IsNullOrWhiteSpace(errorMessage))
             {
@@ -32,7 +32,7 @@
                     @for (var i = 0; i < questions.Count; i++)
                     {
                         var question = questions[i];
-
+                        
                         <QuestionCard Title="@($"Question {questionId}")"
                                       QuestionText="@question.Text"
                                       AnswerOptions="@GetAnswerOptions(question)"
@@ -97,6 +97,11 @@ selectedAnswerOptionId: @selectedAnswerOptionId
     private readonly Dictionary<int, int> selectedAnswersByQuestion = [];
 
     private int? categoryId;
+    private string? categoryName;
+    private string? subCategoryName;
+
+    private string pageTitle = "Questions";
+    private string headingTitle = "Questions";
 
     public int? questionId { get; set; }
     public int? selectedAnswerOptionId { get; set; }
@@ -106,19 +111,27 @@ selectedAnswerOptionId: @selectedAnswerOptionId
 
     protected override async Task OnParametersSetAsync()
     {
-        categoryId = await GetCategoryIdAsync();
+        await LoadCategoryContextAsync();
         await LoadNextQuestionAsync();
     }
 
-    private async Task<int?> GetCategoryIdAsync()
+    private async Task LoadCategoryContextAsync()
     {
         var categories = await ApiClient.HttpClient
             .GetFromJsonAsync<List<CategoryDto>>("api/categories")
             ?? new List<CategoryDto>();
 
-        return categories
-            .FirstOrDefault(c => c.SubCategories.Any(sc => sc.Id == SubCategoryId))
-            ?.Id;
+        var category = categories.FirstOrDefault(c => c.SubCategories.Any(sc => sc.Id == SubCategoryId));
+        categoryId = category?.Id;
+        categoryName = category?.Name;
+        subCategoryName = category?.SubCategories.FirstOrDefault(sc => sc.Id == SubCategoryId)?.Name;
+
+        var titleParts = new[] { categoryName, subCategoryName }
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+        var displayTitle = string.Join(" · ", titleParts);
+
+        pageTitle = string.IsNullOrWhiteSpace(displayTitle) ? "Questions" : $"{displayTitle} - Questions";
+        headingTitle = string.IsNullOrWhiteSpace(displayTitle) ? "Questions" : displayTitle;
     }
 
     private async Task LoadNextQuestionAsync()

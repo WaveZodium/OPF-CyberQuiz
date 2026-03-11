@@ -7,6 +7,7 @@
 @using CyberQuiz.UI.Services
 @using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
+@inject NavigationManager Navigation
 
 <PageTitle>Questions</PageTitle>
 
@@ -45,12 +46,25 @@
                                         disabled="@(!hasSelectedAnswer || hasSubmittedCurrentQuestion)">
                                     Submit answer
                                 </button>
-
+                                
+                                @if (question.IsLastQuestion)
+                                {
+                                    <button class="btn btn-outline-primary"
+                                            @onclick="GoToReviewAsync"
+                                            disabled="@(!hasSubmittedCurrentQuestion)">
+                                        Review results
+                                    </button>
+                                }
+                                else
+                                {
                                 <button class="btn btn-outline-primary"
                                         @onclick="GoToNextQuestionAsync"
                                         disabled="@(!hasSubmittedCurrentQuestion)">
                                     Next question
                                 </button>
+
+                                }
+
                             </ActionContent>
                         </QuestionCard>
                     }
@@ -181,6 +195,15 @@ selectedAnswerOptionId: @selectedAnswerOptionId
             return;
 
         await LoadNextQuestionAsync();
+    }
+
+    private Task GoToReviewAsync()
+    {
+        if (!hasSubmittedCurrentQuestion)
+            return Task.CompletedTask;
+
+        Navigation.NavigateTo($"/review/{SubCategoryId}");
+        return Task.CompletedTask;
     }
 
     private IReadOnlyList<AnswerOptionViewModel> GetAnswerOptions(QuestionDto question)

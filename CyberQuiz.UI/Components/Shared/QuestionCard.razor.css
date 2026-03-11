@@ -1,0 +1,23 @@
+.answer-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.35rem;
+    width: 100%;
+    margin-bottom: 0.25rem;
+}
+
+.answer-option:last-of-type {
+    margin-bottom: 0;
+}
+
+.answer-option--correct {
+    background-color: var(--bs-success-bg-subtle);
+    border: 1px solid var(--bs-success);
+}
+
+.answer-option--incorrect {
+    background-color: var(--bs-danger-bg-subtle);
+    border: 1px solid var(--bs-danger);
+}

@@ -1,0 +1,12 @@
+.explanation-card {
+    border: 1px solid #e6eefb;
+    border-left: 4px solid #0dcaf0;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    box-shadow: 0 6px 16px rgba(20, 33, 61, 0.08);
+}
+
+.explanation-text {
+    white-space: pre-wrap;
+    color: #1f2a44;
+    line-height: 1.5;
+}

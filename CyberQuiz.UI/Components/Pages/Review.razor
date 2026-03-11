@@ -1,4 +1,5 @@
-﻿    @page "/review/{subCategoryId:int}"
+﻿@page "/review/{subCategoryId:int}"
+@rendermode InteractiveServer
 @using CyberQuiz.Shared.DTOs.Catalog
 @using CyberQuiz.Shared.DTOs.Progress
 @using CyberQuiz.Shared.DTOs.Quiz
@@ -6,6 +7,7 @@
 @using CyberQuiz.UI.Models
 @using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
+@inject NavigationManager Navigation
 
 <NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
 
@@ -37,6 +39,12 @@ else
 
         <br /><br />
     }
+
+    <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">
+        Reset quiz and try again
+    </button>
+    <br />
+    <br />
 }
 
 <br />
@@ -73,6 +81,27 @@ else
         {
             errorMessage = ex.Message;
             ReviewData = null;
+        }
+    }
+
+    private async Task ResetQuizAsync()
+    {
+        try
+        {
+            errorMessage = null;
+
+            var response = await ApiClient.HttpClient.DeleteAsync($"/api/quiz/reset/{subCategoryId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            Navigation.NavigateTo($"/quiz/{subCategoryId}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
         }
     }
 

@@ -2,68 +2,69 @@
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">
-            <img class="nav-logo" src="images/cyberquiz_logo.png" alt="CyberQuiz logo" />
-            @* <span>CyberQuiz.UI</span> *@
-        </a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column nav-menu-content">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+<div class="nav-menu-root">
+    <div class="top-row ps-3 navbar navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="">
+                <img class="nav-logo" src="images/cyberquiz_logo.png" alt="CyberQuiz by Commited2Commit" />
+            </a>
         </div>
+    </div>
 
-        <AuthorizeView>
-            <Authorized Context="authState">
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="categories">
-                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Categories
-                    </NavLink>
-                </div>
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-                @if (authState.User.IsInRole("Admin"))
-                {
+    <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+        <nav class="nav flex-column nav-menu-content">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+
+            <AuthorizeView>
+                <Authorized Context="authState">
                     <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="admin">Admin</NavLink>
+                        <NavLink class="nav-link" href="categories">
+                            <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Categories
+                        </NavLink>
                     </div>
-                }
 
-                <div class="nav-item px-3 profile-nav-item" @onclick:stopPropagation="true">
-                    <button type="button"
-                            class="profile-toggle"
-                            title="@authState.User.Identity?.Name"
-                            @onclick="ToggleProfileMenu"
-                            @onclick:stopPropagation="true">
-                        <span class="bi profile-icon" aria-hidden="true" style="margin-left: 16px;"></span> Account
-                    </button>
-
-                    @if (isProfileMenuOpen) {
-                        <div class="profile-popup-menu" @onclick:stopPropagation="true">
-                            <NavLink class="profile-popup-item" href="profile" @onclick="CloseProfileMenu">Profile</NavLink>
-                            <NavLink class="profile-popup-item" href="ai-review" @onclick="CloseProfileMenu">AI Review</NavLink>
-                            <NavLink class="profile-popup-item" href="logout" @onclick="CloseProfileMenu">Logout</NavLink>
+                    @if (authState.User.IsInRole("Admin"))
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="admin">Admin</NavLink>
                         </div>
                     }
-                </div>
-            </Authorized>
 
-            <NotAuthorized>
-                <div class="nav-item px-3 profile-nav-item" @onclick:stopPropagation="true">
-                    <NavLink class="nav-link" href="login">
-                        <span class="bi profile-icon" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
+                    <div class="nav-item px-3 profile-nav-item" @onclick:stopPropagation="true">
+                        <button type="button"
+                                class="profile-toggle"
+                                title="@authState.User.Identity?.Name"
+                                @onclick="ToggleProfileMenu"
+                                @onclick:stopPropagation="true">
+                            <span class="bi profile-icon" aria-hidden="true" style="margin-left: 16px;"></span> Account
+                        </button>
+
+                        @if (isProfileMenuOpen) {
+                            <div class="profile-popup-menu" @onclick:stopPropagation="true">
+                                <NavLink class="profile-popup-item" href="profile" @onclick="CloseProfileMenu">Profile</NavLink>
+                                <NavLink class="profile-popup-item" href="ai-review" @onclick="CloseProfileMenu">AI Review</NavLink>
+                                <NavLink class="profile-popup-item" href="logout" @onclick="CloseProfileMenu">Logout</NavLink>
+                            </div>
+                        }
+                    </div>
+                </Authorized>
+
+                <NotAuthorized>
+                    <div class="nav-item px-3 profile-nav-item" @onclick:stopPropagation="true">
+                        <NavLink class="nav-link" href="login">
+                            <span class="bi profile-icon" aria-hidden="true"></span> Login
+                        </NavLink>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </div>
 </div>
 
 @code {

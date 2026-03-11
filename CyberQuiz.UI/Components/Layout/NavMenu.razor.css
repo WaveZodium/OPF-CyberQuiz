@@ -25,13 +25,17 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
 }
 
 .nav-logo {
-    /*height: 24px;
-    width: auto;*/
     width: 100%;
     height: auto;
+    max-height: 72px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
 }
 
 .bi {
@@ -95,12 +99,17 @@
     color: white;
 }
 
-.nav-scrollable {
-    display: none;
+.nav-menu-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
 }
 
-.navbar-toggler:checked ~ .nav-scrollable {
-    display: block;
+.nav-scrollable {
+    display: none;
+    flex: 1 1 auto;
+    overflow-y: auto;
 }
 
 @media (min-width: 641px) {
@@ -111,10 +120,6 @@
     .nav-scrollable {
         /* Never collapse the sidebar for wide screens */
         display: block;
-
-        /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
-        overflow-y: auto;
     }
 }
 

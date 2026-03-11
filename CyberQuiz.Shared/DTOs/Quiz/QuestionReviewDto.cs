@@ -8,6 +8,7 @@ public class QuestionReviewDto
     public int? CorrectAnswerOptionId { get; set; }
     public bool IsCorrect { get; set; }
     public List<AnswerOptionReviewDto> AnswerOptions { get; set; }
+    public string? Explanation { get; set; }
 }
 
 public class AnswerOptionReviewDto

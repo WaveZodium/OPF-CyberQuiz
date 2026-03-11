@@ -248,7 +248,8 @@ namespace CyberQuiz.Application.Services
                     SelectedAnswerOptionId = userResult.SelectedAnswerOptionId,
                     CorrectAnswerOptionId = correctOption?.Id,
                     AnswerOptions = answerOptionReviews,
-                    IsCorrect = userResult.IsCorrect
+                    IsCorrect = userResult.IsCorrect,
+                    Explanation = question.Explanation
                 });
             }
 

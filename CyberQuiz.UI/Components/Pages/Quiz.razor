@@ -33,7 +33,7 @@
                     {
                         var question = questions[i];
                         
-                        <QuestionCard Title="@($"Question {questionId}")"
+                        <QuestionCard Title="@($"Question {question.OrderIndex}")"
                                       QuestionText="@question.Text"
                                       AnswerOptions="@GetAnswerOptions(question)"
                                       SelectedAnswerOptionId="@GetSelectedOptionId(question.QuestionId)"

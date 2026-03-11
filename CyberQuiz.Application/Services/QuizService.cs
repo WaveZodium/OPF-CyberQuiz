@@ -134,6 +134,7 @@ namespace CyberQuiz.Application.Services
             {
                 QuestionId = nextQuestion.Id,
                 Text = nextQuestion.Text,
+                OrderIndex = nextQuestion.OrderIndex,
                 AnswerOptions = options.Select(o => new AnswerOptionDto
                 {
                     Id = o.Id,
@@ -245,6 +246,7 @@ namespace CyberQuiz.Application.Services
                 {
                     QuestionId = question.Id,
                     QuestionText = question.Text,
+                    OrderIndex = question.OrderIndex,
                     SelectedAnswerOptionId = userResult.SelectedAnswerOptionId,
                     CorrectAnswerOptionId = correctOption?.Id,
                     AnswerOptions = answerOptionReviews,

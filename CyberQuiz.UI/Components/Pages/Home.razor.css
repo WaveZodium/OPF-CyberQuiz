@@ -1,0 +1,10 @@
+.home-hero {
+    display: block;
+    width: 100%;
+    max-width: 720px;
+    height: auto;
+    /*margin: 0 0 1rem 0;
+    border-radius: 12px;
+    -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.85), black 10%, black 90%, rgba(0, 0, 0, 0.85));
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.85), black 10%, black 90%, rgba(0, 0, 0, 0.85));*/
+}

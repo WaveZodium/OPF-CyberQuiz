@@ -16,7 +16,7 @@ public static class IdentitySeeder
 
         // const string userName = "user"; - kravet är username=user, inte email 
         //behöver ändra UI login.razor för detta
-        const string userName = "user@cyberquiz.local"; //kommer tas bort när UI login.razor ändras 
+        const string userName = "user"; //kommer tas bort när UI login.razor ändras 
         const string email = "user@cyberquiz.local";
         const string password = "Password1234!";
 

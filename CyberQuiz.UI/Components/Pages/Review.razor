@@ -1,4 +1,5 @@
 ﻿@page "/review/{subCategoryId:int}"
+@rendermode InteractiveServer
 @using CyberQuiz.Shared.DTOs.Catalog
 @using CyberQuiz.Shared.DTOs.Progress
 @using CyberQuiz.Shared.DTOs.Quiz
@@ -6,6 +7,7 @@
 @using CyberQuiz.UI.Models
 @using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
+@inject NavigationManager Navigation
 
 <NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
 
@@ -21,6 +23,33 @@ else if (ReviewData is null)
 }
 else
 {
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <div class="row text-center">
+                <div class="col">
+                    <div class="fw-semibold">Questions</div>
+                    <div>@TotalQuestions</div>
+                </div>
+                <div class="col">
+                    <div class="fw-semibold text-success">Correct</div>
+                    <div>@CorrectCount</div>
+                </div>
+                <div class="col">
+                    <div class="fw-semibold text-danger">Incorrect</div>
+                    <div>@IncorrectCount</div>
+                </div>
+                <div class="col">
+                    <div class="fw-semibold text-secondary">Unanswered</div>
+                    <div>@UnansweredCount</div>
+                </div>
+                <div class="col">
+                    <div class="fw-semibold">Score</div>
+                    <div>@ScorePercent%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @foreach (var review in ReviewData)
     {
         <QuestionCard Title="@($"Question {review.QuestionId}")"
@@ -30,8 +59,19 @@ else
                       GroupName="@($"review-{review.QuestionId}")"
                       AriaLabel="@($"Answers for question {review.QuestionId}")"
                       IsReadOnly="true" />
+
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2">
+            Explain with AI
+        </button>
+
         <br /><br />
     }
+
+    <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">
+        Reset quiz and try again
+    </button>
+    <br />
+    <br />
 }
 
 <br />
@@ -45,6 +85,14 @@ else
     private int? categoryId;
 
     public List<QuestionReviewDto>? ReviewData { get; set; } = new List<QuestionReviewDto>();
+
+    private int TotalQuestions => ReviewData?.Count ?? 0;
+    private int CorrectCount => ReviewData?.Count(IsCorrect) ?? 0;
+    private int IncorrectCount => ReviewData?.Count(IsIncorrect) ?? 0;
+    private int UnansweredCount => ReviewData?.Count(IsUnanswered) ?? 0;
+    private decimal ScorePercent => TotalQuestions == 0
+        ? 0
+        : Math.Round((decimal)CorrectCount / TotalQuestions * 100, 1);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -71,6 +119,27 @@ else
         }
     }
 
+    private async Task ResetQuizAsync()
+    {
+        try
+        {
+            errorMessage = null;
+
+            var response = await ApiClient.HttpClient.DeleteAsync($"/api/quiz/reset/{subCategoryId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            Navigation.NavigateTo($"/quiz/{subCategoryId}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
     private IReadOnlyList<AnswerOptionViewModel> GetReviewAnswerOptions(QuestionReviewDto review)
         => review.AnswerOptions
             .Select(option => new AnswerOptionViewModel
@@ -81,4 +150,13 @@ else
                 IsSelectedByUser = option.IsSelectedByUser
             })
             .ToList();
+
+    private static bool IsCorrect(QuestionReviewDto review)
+        => review.AnswerOptions.Any(option => option.IsSelectedByUser && option.IsCorrect);
+
+    private static bool IsIncorrect(QuestionReviewDto review)
+        => review.AnswerOptions.Any(option => option.IsSelectedByUser) && !IsCorrect(review);
+
+    private static bool IsUnanswered(QuestionReviewDto review)
+        => review.AnswerOptions.All(option => !option.IsSelectedByUser);
 }

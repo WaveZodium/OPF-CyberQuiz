@@ -12,9 +12,9 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var user = request.Identifier.Contains('@')
-            ? await userManager.FindByEmailAsync(request.Identifier)
-            : await userManager.FindByNameAsync(request.Identifier);
+        var identifier = request.Identifier.Trim();
+        var user = await userManager.FindByNameAsync(identifier)
+            ?? await userManager.FindByEmailAsync(identifier);
 
         if (user is null)
         {

@@ -95,6 +95,7 @@ namespace CyberQuiz.Application.Services
                 {
                     // Uses the progress calculator to get the progress for the current subcategory
                     var progress = await _progressCalculator.GetSubCategoryProgressAsync(subCategory.Id, userId);
+                    progress.SubCategoryName = subCategory.Name;
 
                     subCategoryProgressList.Add(progress);
                 }

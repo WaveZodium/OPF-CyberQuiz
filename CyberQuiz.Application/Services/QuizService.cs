@@ -121,12 +121,6 @@ namespace CyberQuiz.Application.Services
                 var currentIndex = orderedSubCategories.FindIndex(s => s.Id == subCategoryId);
                 var hasMoreSubCategories = currentIndex >= 0 && currentIndex < orderedSubCategories.Count - 1;
 
-                if (!hasMoreSubCategories)
-                {
-                    // Last subcategory - no more questions in entire category
-                    throw new DomainException("No more questions available in this category. You have completed all subcategories!");
-                }
-
                 // More subcategories exist - subcategory completed
                 return null;
             }

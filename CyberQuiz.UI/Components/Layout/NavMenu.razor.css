@@ -22,6 +22,16 @@
 
 .navbar-brand {
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-logo {
+    /*height: 24px;
+    width: auto;*/
+    width: 100%;
+    height: auto;
 }
 
 .bi {

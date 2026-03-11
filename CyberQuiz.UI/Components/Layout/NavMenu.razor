@@ -4,7 +4,10 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">CyberQuiz.UI</a>
+        <a class="navbar-brand" href="">
+            <img class="nav-logo" src="images/cyberquiz_logo.png" alt="CyberQuiz logo" />
+            @* <span>CyberQuiz.UI</span> *@
+        </a>
     </div>
 </div>
 
@@ -44,9 +47,9 @@
 
                     @if (isProfileMenuOpen) {
                         <div class="profile-popup-menu" @onclick:stopPropagation="true">
-                            <NavLink class="profile-popup-item" href="profile">Profile</NavLink>
-                            <NavLink class="profile-popup-item" href="ai-review">AI Review</NavLink>
-                            <NavLink class="profile-popup-item" href="logout">Logout</NavLink>
+                            <NavLink class="profile-popup-item" href="profile" @onclick="CloseProfileMenu">Profile</NavLink>
+                            <NavLink class="profile-popup-item" href="ai-review" @onclick="CloseProfileMenu">AI Review</NavLink>
+                            <NavLink class="profile-popup-item" href="logout" @onclick="CloseProfileMenu">Logout</NavLink>
                         </div>
                     }
                 </div>
@@ -69,5 +72,10 @@
     private void ToggleProfileMenu()
     {
         isProfileMenuOpen = !isProfileMenuOpen;
+    }
+
+    private void CloseProfileMenu()
+    {
+        isProfileMenuOpen = false;
     }
 }

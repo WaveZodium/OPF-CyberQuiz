@@ -120,8 +120,55 @@ public sealed class AuthController(UserManager<ApplicationUser> userManager, Sig
         return Ok(new { message = "Password changed successfully." });
     }
 
+    [Authorize]
+    [HttpPost("change-email")]
+    public async Task<IActionResult> ChangeEmail(ChangeEmailRequest request)
+    {
+        // Get the currently authenticated user
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return Unauthorized("User not found.");
+        }
+
+        // Retrieve the user from the database
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return Unauthorized("User not found.");
+        }
+
+        // Verify password for security
+        var isPasswordValid = await userManager.CheckPasswordAsync(user, request.Password);
+        if (!isPasswordValid)
+        {
+            return BadRequest("Invalid password.");
+        }
+
+        // Check if the new email is already in use
+        var existingUser = await userManager.FindByEmailAsync(request.NewEmail);
+        if (existingUser is not null && existingUser.Id != userId)
+        {
+            return BadRequest("Email is already in use.");
+        }
+
+        // Update the email
+        var result = await userManager.SetEmailAsync(user, request.NewEmail);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors
+                .GroupBy(e => e.Code)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray());
+
+            return BadRequest(new ValidationProblemDetails(errors));
+        }
+
+        return Ok(new { message = "Email changed successfully." });
+    }
+
     public sealed record LoginRequest(string Identifier, string Password);
     public sealed record RegisterRequest(string UserName, string Email, string Password);
     public sealed record ResetPasswordRequest(string Email, string NewPassword);
     public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+    public sealed record ChangeEmailRequest(string Password, string NewEmail);
 }

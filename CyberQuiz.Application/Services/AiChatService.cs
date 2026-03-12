@@ -158,6 +158,7 @@ namespace CyberQuiz.Application.Services
                 Rules:
                 - Maximum 3 short paragraphs
                 - Maximum 90 words total
+                - Separate paragraphs with a blank line
                 - Be clear and practical
                 - Do not use bullet points
                 - Do not repeat the full question

@@ -292,7 +292,7 @@
                 QuestionText = question.Text,
                 UserAnswer = userAnswer?.Text,
                 CorrectAnswer = correctAnswer?.Text ?? string.Empty,
-                Explanation = "Explanation placeholder", //question.Explanation,
+                Explanation = question.Explanation,
                 WasUserAnswerCorrect = selectedAnswerOptionId == correctAnswerOptionId
             };
 

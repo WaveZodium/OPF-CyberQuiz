@@ -8,6 +8,8 @@ namespace CyberQuiz.API.Controllers
     [Route("api/ai")]
     public class AiChatController : ControllerBase
     {
+        //DI for the AI chat service, which will handle the logic of communicating with the AI model
+        //and generating responses based on the user's input and quiz question details.
         private readonly IAiChatService _aiChatService;
 
         public AiChatController(IAiChatService aiChatService)
@@ -15,6 +17,7 @@ namespace CyberQuiz.API.Controllers
             _aiChatService = aiChatService;
         }
 
+        // Endpoint for handling general chat messages from the user.
         [HttpPost("chat")]
         public async Task<ActionResult<ChatResponseDto>> Chat([FromBody] ChatRequestDto request)
         {
@@ -22,6 +25,7 @@ namespace CyberQuiz.API.Controllers
             return Ok(response);
         }
 
+        // Endpoint for handling quiz help requests, where the user asks for assistance on a specific quiz question.
         [HttpPost("quiz-help")]
         public async Task<ActionResult<ChatResponseDto>> QuizHelp([FromBody] QuizHelpRequestDto request)
         {

@@ -77,9 +77,8 @@
             <br />
         }
 
-        <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">
-            Reset quiz and try again
-        </button>
+        <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">Reset quiz and try again</button>
+        <button type="button" class="btn btn-primary" @onclick="GoToNextSubCategory">Go to next subcategory</button>
         <br />
         <br />
     }
@@ -149,6 +148,12 @@
         {
             errorMessage = ex.Message;
         }
+    }
+
+    private async Task GoToNextSubCategory()
+    {
+        var nextSubCategory = ReviewData.FirstOrDefault(r => r.OrderIndex == 1).NextSubCategoryId;
+        Navigation.NavigateTo($"/quiz/{nextSubCategory}");
     }
 
     private IReadOnlyList<AnswerOptionViewModel> GetReviewAnswerOptions(QuestionReviewDto review)

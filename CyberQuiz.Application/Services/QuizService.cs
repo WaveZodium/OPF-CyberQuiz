@@ -254,8 +254,7 @@ namespace CyberQuiz.Application.Services
             return reviewList;
         }
 
-        private async Task<(int SubCategoryId, int CategoryId)> DetermineNextSubCategoryId(
-        int currentSubCategoryId,string userId)
+        private async Task<(int SubCategoryId, int CategoryId)> DetermineNextSubCategoryId(int currentSubCategoryId,string userId)
         {
             var progress = await _progress.GetSubCategoryProgressAsync(currentSubCategoryId, userId);
 
@@ -273,6 +272,7 @@ namespace CyberQuiz.Application.Services
                 .OrderBy(sc => sc.OrderIndex)
                 .ToList();
 
+            // Check if there are any remaining subcategories in the same category that are not completed
             foreach (var subCat in orderedSubCategories)
             {
                 var subProgress = await _progress.GetSubCategoryProgressAsync(subCat.Id, userId);
@@ -282,10 +282,24 @@ namespace CyberQuiz.Application.Services
                 }
             }
 
+            bool allSubCategoriesCompleted = true;
+            foreach (var subCat in allSubCategories.OrderBy(sc => sc.OrderIndex))
+            {
+                var subProgress = await _progress.GetSubCategoryProgressAsync(subCat.Id, userId);
+                if (!subProgress.IsCompleted)
+                {
+                    allSubCategoriesCompleted = false;
+                    break;
+                }
+            }
+
+            if (!allSubCategoriesCompleted)
+                return (0, 0);
+
             // Try next category
             var allCategories = await _categoryRepo.GetAllCategoriesWithSubCategoriesAsync();
             var currentCategory = allCategories.FirstOrDefault(c => c.Id == currentSubCategory.CategoryId);
-
+            // If the current category is not found (which should not happen), return (0, 0)
             if (currentCategory != null)
             {
                 var nextCategory = allCategories
@@ -306,7 +320,7 @@ namespace CyberQuiz.Application.Services
                 }
             }
 
-            return (0, 0); // All done
+            return (0, 0);
         }
 
 

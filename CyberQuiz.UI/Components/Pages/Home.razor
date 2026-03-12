@@ -6,63 +6,22 @@
 
 <img class="home-hero rounded mx-auto d-block" src="images/cyberquiz_welcome.png" alt="CyberQuiz welcome" />
 <br />
-
-<h1>Quotes</h1>
-
-@if (isLoading)
-{
-    <p>Loading...</p>
-}
-else if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <p class="text-danger">@errorMessage</p>
-}
-else if (quotes?.Quotes is { Count: > 0 })
-{
-    <ul>
-        @foreach (var q in quotes.Quotes)
-        {
-            <li>
-                <strong>@q.Author</strong>: @q.Quote
-            </li>
-        }
-    </ul>
-}
-else
-{
-    <p>No quotes found.</p>
-}
+<p>
+    CyberQuiz makes it easy to practice cybersecurity concepts with quick, focused quizzes.
+    Pick a category, answer at your own pace, and review your results to see where to improve.
+</p>
+<ul>
+    <li>Explore curated categories and difficulty levels.</li>
+    <li>Track progress and revisit questions anytime.</li>
+    <li>Learn the “why” with explanations after each quiz.</li>
+</ul>
+<p>
+    Ready to start? Choose a category from the menu and dive in.
+</p>
 
 @code {
-    private QuotesResponse? quotes;
-    private bool isLoading = true;
-    private string? errorMessage;
-
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var client = HttpClientFactory.CreateClient();
-            quotes = await client.GetFromJsonAsync<QuotesResponse>("https://dummyjson.com/quotes");
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private sealed class QuotesResponse
-    {
-        public List<QuoteDetail> Quotes { get; set; } = [];
-    }
-
-    private sealed class QuoteDetail
-    {
-        public string Quote { get; set; } = "";
-        public string Author { get; set; } = "";
+        
     }
 }

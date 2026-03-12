@@ -11,5 +11,7 @@ namespace CyberQuiz.Shared.DTOs.Quiz
         public List<AnswerOptionDto> AnswerOptions { get; set; } = new();
         public bool IsLastQuestion { get; set; }
         public int OrderIndex { get; set; }
+        public string? Explanation { get; set; }
+
     }
 }

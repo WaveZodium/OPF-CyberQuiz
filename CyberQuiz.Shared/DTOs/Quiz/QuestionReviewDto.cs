@@ -10,6 +10,7 @@ public class QuestionReviewDto
     public List<AnswerOptionReviewDto> AnswerOptions { get; set; }
     public string? Explanation { get; set; }
     public int OrderIndex { get; set; }
+    public int NextSubCategoryId { get; set; }
 }
 
 public class AnswerOptionReviewDto

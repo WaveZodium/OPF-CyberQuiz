@@ -261,16 +261,37 @@ namespace CyberQuiz.Application.Services
 
         private async Task<int> DetermineNextSubCategoryId(int currentSubCategoryId, string userId)
         {
-           // check if the user has reached 80% correct
+            // check if the user has reached 80% correct
             var progress = await _progress.GetSubCategoryProgressAsync(currentSubCategoryId, userId);
             
             if (progress.PercentCorrect < 80)
                 return 0; // YOU SHALL NOT PASS! (to the next subcategory)
-        
-            var nextSubCategoryId = await _subCategoryRepo
-                .GetNextSubCategoryAsync(currentSubCategoryId);
+
+            // Get current subcategory to access CategoryId
+            var currentSubCategory = await _subCategoryRepo.GetByIdAsync(currentSubCategoryId);
+            if (currentSubCategory == null)
+                return 0;
             
-            return nextSubCategoryId ?? 0;
+            // Get all subcategories in the same category that come after the current one
+            var allSubCategories = await _subCategoryRepo.GetByCategoryAsync(currentSubCategory.CategoryId);
+            var orderedSubCategories = allSubCategories
+                .Where(sc => sc.OrderIndex > currentSubCategory.OrderIndex)
+                .OrderBy(sc => sc.OrderIndex)
+                .ToList();
+            
+            // Find the first uncompleted subcategory (skips already completed ones)
+            foreach (var subCat in orderedSubCategories)
+            {
+                var subProgress = await _progress.GetSubCategoryProgressAsync(subCat.Id, userId);
+                
+                // Return the first subcategory that is not yet completed
+                if (!subProgress.IsCompleted)
+                {
+                    return subCat.Id;
+                }
+            }
+            
+            return 0; // All subsequent subcategories are completed
         }
 
         public async Task UpdateQuizResultAsync(

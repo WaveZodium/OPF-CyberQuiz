@@ -214,26 +214,20 @@ namespace CyberQuiz.Application.Services
 
         public async Task<List<QuestionReviewDto>> GetSubCategoryReviewAsync(int subCategoryId, string userId)
         {
-            // Get all questions for the subcategory along with the user's answers
             var questions = await _questionRepo.GetQuestionsWithAnswersAsync(subCategoryId);
-
-            // Get the user's results for the subcategory
             var userResults = await _userResultRepo.GetBySubCategoryAsync(userId, subCategoryId);
-
-            // Build the review list
+            
+            // ÄNDRAT: Använd tuple-destructuring
+            var (nextSubCategoryId, nextCategoryId) = await DetermineNextSubCategoryId(subCategoryId, userId);
+            
             var reviewList = new List<QuestionReviewDto>();
-
-            //Loop through each question
 
             foreach (var question in questions)
             {
                 var userResult = userResults.FirstOrDefault(ur => ur.QuestionId == question.Id);
-
-                if (userResult is null)
-                    continue;
+                if (userResult is null) continue;
 
                 var correctOption = question.AnswerOptions.FirstOrDefault(ao => ao.IsCorrect);
-                // Build the list of answer options for the review, marking which one is correct
                 var answerOptionReviews = question.AnswerOptions.Select(ao => new AnswerOptionReviewDto
                 {
                     Id = ao.Id,
@@ -242,7 +236,6 @@ namespace CyberQuiz.Application.Services
                     IsSelectedByUser = ao.Id == userResult.SelectedAnswerOptionId
                 }).ToList();
 
-                // Build the QuestionReviewDto for the question and add it to the review list
                 reviewList.Add(new QuestionReviewDto
                 {
                     QuestionId = question.Id,
@@ -253,51 +246,48 @@ namespace CyberQuiz.Application.Services
                     AnswerOptions = answerOptionReviews,
                     IsCorrect = userResult.IsCorrect,
                     Explanation = question.Explanation,
-                    NextSubCategoryId = await DetermineNextSubCategoryId(subCategoryId, userId)
+                    NextSubCategoryId = nextSubCategoryId,    
+                    NextCategoryId = nextCategoryId       
                 });
             }
 
             return reviewList;
         }
 
-        private async Task<int> DetermineNextSubCategoryId(int currentSubCategoryId, string userId)
+        private async Task<(int SubCategoryId, int CategoryId)> DetermineNextSubCategoryId(
+        int currentSubCategoryId,string userId)
         {
-            // check if the user has reached 80% correct
             var progress = await _progress.GetSubCategoryProgressAsync(currentSubCategoryId, userId);
-            
-            if (progress.PercentCorrect < 80)
-                return 0; // YOU SHALL NOT PASS! (to the next subcategory)
 
-            // Get current subcategory to access CategoryId
+            if (progress.PercentCorrect < 80)
+                return (0, 0); // YOU SHALL NOT PASS!
+
             var currentSubCategory = await _subCategoryRepo.GetByIdAsync(currentSubCategoryId);
             if (currentSubCategory == null)
-                return 0;
-            
-            // Get all subcategories in the same category that come after the current one
+                return (0, 0);
+
+            // Try same category
             var allSubCategories = await _subCategoryRepo.GetByCategoryAsync(currentSubCategory.CategoryId);
             var orderedSubCategories = allSubCategories
                 .Where(sc => sc.OrderIndex > currentSubCategory.OrderIndex)
                 .OrderBy(sc => sc.OrderIndex)
                 .ToList();
-            
-            // Find the first uncompleted subcategory (skips already completed ones)
+
             foreach (var subCat in orderedSubCategories)
             {
                 var subProgress = await _progress.GetSubCategoryProgressAsync(subCat.Id, userId);
-                
-                // Return the first subcategory that is not yet completed
                 if (!subProgress.IsCompleted)
                 {
-                    return subCat.Id;
+                    return (subCat.Id, currentSubCategory.CategoryId); // Same category
                 }
             }
 
+            // Try next category
             var allCategories = await _categoryRepo.GetAllCategoriesWithSubCategoriesAsync();
             var currentCategory = allCategories.FirstOrDefault(c => c.Id == currentSubCategory.CategoryId);
 
             if (currentCategory != null)
             {
-                
                 var nextCategory = allCategories
                     .Where(c => c.Id > currentCategory.Id)
                     .OrderBy(c => c.Id)
@@ -305,20 +295,22 @@ namespace CyberQuiz.Application.Services
 
                 if (nextCategory?.SubCategories.Any() == true)
                 {
-                    
                     var firstSubCategory = nextCategory.SubCategories
                         .OrderBy(sc => sc.OrderIndex)
                         .FirstOrDefault();
 
                     if (firstSubCategory != null)
                     {
-                        return firstSubCategory.Id; 
+                        return (firstSubCategory.Id, nextCategory.Id); // NEW category!
                     }
                 }
             }
 
-            return 0; // All subsequent subcategories are completed
+            return (0, 0); // All done
         }
+
+
+
 
         public async Task UpdateQuizResultAsync(
             string userId,

@@ -251,11 +251,20 @@ namespace CyberQuiz.Application.Services
                     CorrectAnswerOptionId = correctOption?.Id,
                     AnswerOptions = answerOptionReviews,
                     IsCorrect = userResult.IsCorrect,
-                    Explanation = question.Explanation
+                    Explanation = question.Explanation,
+                    NextSubCategoryId = await DetermineNextSubCategoryId(subCategoryId)
                 });
             }
 
             return reviewList;
+        }
+
+        private async Task<int> DetermineNextSubCategoryId(int currentSubCategoryId)
+        {
+            // Gets the next subcategory in the same category based on the order index
+            var nextSubCategory = await _subCategoryRepo
+                .GetNextSubCategoryAsync(currentSubCategoryId);
+            return nextSubCategory ?? 0;
         }
 
         public async Task UpdateQuizResultAsync(

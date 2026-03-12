@@ -91,6 +91,7 @@ namespace CyberQuiz.Application.Services
 
         public async Task<QuestionDto?> GetNextQuestionAsync(int subCategoryId, string userId)
         {
+
             // Get all questions for the subcategory
             var questions = await _questionRepo.GetBySubCategoryAsync(subCategoryId);
 
@@ -290,7 +291,32 @@ namespace CyberQuiz.Application.Services
                     return subCat.Id;
                 }
             }
-            
+
+            var allCategories = await _categoryRepo.GetAllCategoriesWithSubCategoriesAsync();
+            var currentCategory = allCategories.FirstOrDefault(c => c.Id == currentSubCategory.CategoryId);
+
+            if (currentCategory != null)
+            {
+                
+                var nextCategory = allCategories
+                    .Where(c => c.Id > currentCategory.Id)
+                    .OrderBy(c => c.Id)
+                    .FirstOrDefault();
+
+                if (nextCategory?.SubCategories.Any() == true)
+                {
+                    
+                    var firstSubCategory = nextCategory.SubCategories
+                        .OrderBy(sc => sc.OrderIndex)
+                        .FirstOrDefault();
+
+                    if (firstSubCategory != null)
+                    {
+                        return firstSubCategory.Id; 
+                    }
+                }
+            }
+
             return 0; // All subsequent subcategories are completed
         }
 

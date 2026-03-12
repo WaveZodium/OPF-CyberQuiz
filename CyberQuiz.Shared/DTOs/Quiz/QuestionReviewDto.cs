@@ -11,6 +11,7 @@ public class QuestionReviewDto
     public string? Explanation { get; set; }
     public int OrderIndex { get; set; }
     public int NextSubCategoryId { get; set; }
+    public int NextCategoryId { get; set; }
 }
 
 public class AnswerOptionReviewDto

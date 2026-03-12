@@ -88,8 +88,8 @@
             <button type="button"
                     class="btn btn-primary"
                     @onclick="GoToNextSubCategory"
-                    disabled="@(canGoToNextSubCategory ? null : true)"
-                    aria-disabled="@(canGoToNextSubCategory ? null : true)">
+                    disabled="@(CanGoToNextSubCategory ? null : true)"
+                    aria-disabled="@(CanGoToNextSubCategory ? null : true)">
                 Go to next subcategory
             </button>
         </span>
@@ -104,7 +104,6 @@
     [Parameter]
     public int subCategoryId { get; set; }
 
-    private SubCategoryProgressDto? selectedCategory;
     private string? errorMessage;
     private int? categoryId;
 
@@ -117,7 +116,7 @@
     private decimal ScorePercent => TotalQuestions == 0
         ? 0
         : Math.Round((decimal)CorrectCount / TotalQuestions * 100, 1);
-    private bool canGoToNextSubCategory => ScorePercent >= 80 && ReviewData?.Any(r => r.NextSubCategoryId != null) == true;
+    private bool CanGoToNextSubCategory => ScorePercent >= 80 && ReviewData?.Any(r => r.NextSubCategoryId > 0) == true;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -173,7 +172,15 @@
 
     private async Task GoToNextSubCategory()
     {
-        var nextSubCategory = ReviewData.FirstOrDefault(r => r.OrderIndex == 1).NextSubCategoryId;
+        var nextSubCategory = ReviewData?
+            .FirstOrDefault(r => r.OrderIndex == 1)?
+            .NextSubCategoryId;
+
+        if (nextSubCategory is null || nextSubCategory <= 0)
+        {
+            return;
+        }
+
         Navigation.NavigateTo($"/quiz/{nextSubCategory}");
     }
 

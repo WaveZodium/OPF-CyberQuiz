@@ -8,6 +8,7 @@
 @using CyberQuiz.UI.Components.Shared
 @inject IApiClient ApiClient
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <div class="review-page page-content">
     <NavLink class="btn btn-link px-0 mb-3" href="@(categoryId is not null ? $"/categories/{categoryId}" : "/categories/")">← Back to subcategories</NavLink>
@@ -77,8 +78,21 @@
             <br />
         }
 
-        <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">Reset quiz and try again</button>
-        <button type="button" class="btn btn-primary" @onclick="GoToNextSubCategory">Go to next subcategory</button>
+        <button type="button" class="btn btn-danger" @onclick="ResetQuizAsync">
+            Reset quiz and try again
+        </button>
+        <span class="d-inline-block"
+              title="Du måste ha minst 80% rätt för att gå till nästa kategori."
+              aria-label="Du måste ha minst 80% rätt för att gå till nästa kategori."
+              tabindex="0">
+            <button type="button"
+                    class="btn btn-primary"
+                    @onclick="GoToNextSubCategory"
+                    disabled="@(canGoToNextSubCategory ? null : true)"
+                    aria-disabled="@(canGoToNextSubCategory ? null : true)">
+                Go to next subcategory
+            </button>
+        </span>
         <br />
         <br />
     }
@@ -103,6 +117,7 @@
     private decimal ScorePercent => TotalQuestions == 0
         ? 0
         : Math.Round((decimal)CorrectCount / TotalQuestions * 100, 1);
+    private bool canGoToNextSubCategory => ScorePercent >= 80 && ReviewData?.Any(r => r.NextSubCategoryId != null) == true;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -134,6 +149,12 @@
         try
         {
             errorMessage = null;
+
+            var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to reset the quiz?");
+            if (!confirmed)
+            {
+                return;
+            }
 
             var response = await ApiClient.HttpClient.DeleteAsync($"/api/quiz/reset/{subCategoryId}");
             if (!response.IsSuccessStatusCode)

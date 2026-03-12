@@ -1,0 +1,133 @@
+@page "/ai-chat"
+@rendermode InteractiveServer
+@using System.Net.Http.Json
+@using CyberQuiz.Shared.DTOs.AiChat
+@using CyberQuiz.UI.Services
+@inject IApiClient ApiClient
+
+<PageTitle>AI Chat</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="ai-chat-page page-content">
+            <h3 class="mb-3">AI Chat</h3>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    @if (history.Count == 0)
+                    {
+                        <div class="text-secondary small">No messages yet. Start a conversation.</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var chat in history)
+                            {
+                                var isUser = chat.Role.Equals("user", StringComparison.OrdinalIgnoreCase);
+
+                                <div class="d-flex @(isUser ? "justify-content-end" : "justify-content-start")">
+                                    <div class="border rounded p-2 @(isUser ? "bg-primary text-white" : "bg-light")" style="max-width: 80%;">
+                                        <div class="small text-uppercase fw-semibold @(isUser ? "text-white-50" : "text-secondary")">
+                                            @chat.Role
+                                        </div>
+                                        <div>@chat.Content</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="input-group">
+                        <input class="form-control"
+                               placeholder="Ask a cybersecurity question..."
+                               @bind="message"
+                               @bind:event="oninput"
+                               disabled="@isSending" />
+                        <button class="btn btn-primary"
+                                type="button"
+                                @onclick="SendMessageAsync"
+                                disabled="@isSending">
+                            @(isSending ? "Sending..." : "Send")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You must be logged in to view this page.</p>
+        <NavLink class="btn btn-primary" href="/login">Go to Login</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private readonly List<ChatMessageDto> history = [];
+    private string message = string.Empty;
+    private string? errorMessage;
+    private bool isSending;
+
+    private async Task SendMessageAsync()
+    {
+        if (isSending || string.IsNullOrWhiteSpace(message))
+            return;
+
+        try
+        {
+            isSending = true;
+            errorMessage = null;
+
+            var userMessage = new ChatMessageDto
+            {
+                Role = "user",
+                Content = message.Trim()
+            };
+
+            history.Add(userMessage);
+
+            var request = new ChatRequestDto
+            {
+                Message = userMessage.Content,
+                History = [.. history]
+            };
+
+            var response = await ApiClient.HttpClient.PostAsJsonAsync("api/ai/chat", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            var chatResponse = await response.Content.ReadFromJsonAsync<ChatResponseDto>();
+            if (chatResponse is null)
+            {
+                errorMessage = "Empty response from AI.";
+                return;
+            }
+
+            history.Add(new ChatMessageDto
+            {
+                Role = "assistant",
+                Content = chatResponse.Reply
+            });
+
+            message = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSending = false;
+        }
+    }
+}

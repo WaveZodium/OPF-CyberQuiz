@@ -28,6 +28,12 @@
                             <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Categories
                         </NavLink>
                     </div>
+                    
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="ai-chat">
+                            <span class="bi bi-chat-dots-fill-nav-menu" aria-hidden="true"></span> AI Chat
+                        </NavLink>
+                    </div>
 
                     @if (authState.User.IsInRole("Admin"))
                     {
@@ -48,6 +54,7 @@
                         @if (isProfileMenuOpen) {
                             <div class="profile-popup-menu" @onclick:stopPropagation="true">
                                 <NavLink class="profile-popup-item" href="profile" @onclick="CloseProfileMenu">Profile</NavLink>
+                                <NavLink class="profile-popup-item" href="stats" @onclick="CloseProfileMenu">Statistics</NavLink>
                                 <NavLink class="profile-popup-item" href="ai-review" @onclick="CloseProfileMenu">AI Review</NavLink>
                                 <NavLink class="profile-popup-item" href="logout" @onclick="CloseProfileMenu">Logout</NavLink>
                             </div>

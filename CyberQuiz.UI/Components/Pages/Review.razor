@@ -145,10 +145,11 @@ Next Subcategory ID: @nextSubCategoryId<br />
             categoryId = categories
                 .FirstOrDefault(c => c.SubCategories.Any(sc => sc.Id == subCategoryId))
                 ?.Id;
-        
-            
-            nextSubCategoryId = ReviewData.FirstOrDefault(r => r.OrderIndex == 1)?.NextSubCategoryId;
-            //nextCategoryId = 
+
+
+            var firstQuestionReview = ReviewData.FirstOrDefault(r => r.OrderIndex == 1);
+            nextSubCategoryId = firstQuestionReview?.NextSubCategoryId;
+            nextCategoryId = firstQuestionReview?.NextCategoryId;
         }
         catch (Exception ex)
         {

@@ -85,6 +85,19 @@
               title="You must have at least 80% correct to go to the next subcategory."
               aria-label="You must have at least 80% correct to go to the next subcategory."
               tabindex="0">
+            
+            @if (isCategoryComplete == true)
+            {
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="GoToNextCategory"
+                        disabled="@(CanGoToNextSubCategory ? null : true)"
+                        aria-disabled="@(CanGoToNextSubCategory ? null : true)">
+                    Go to next category
+                </button>
+            }
+            else
+            {
             <button type="button"
                     class="btn btn-primary"
                     @onclick="GoToNextSubCategory"
@@ -92,6 +105,8 @@
                     aria-disabled="@(CanGoToNextSubCategory ? null : true)">
                 Go to next subcategory
             </button>
+
+            }
         </span>
         <br />
         <br />
@@ -105,6 +120,8 @@
 <h4>Debug</h4>
 Next Category ID: @nextCategoryId<br/>
 Next Subcategory ID: @nextSubCategoryId<br />
+Category Complete: @isCategoryComplete
+<br />
 <br/>
 
 @code {
@@ -113,6 +130,7 @@ Next Subcategory ID: @nextSubCategoryId<br />
 
     private int? nextCategoryId;
     private int? nextSubCategoryId;
+    private bool? isCategoryComplete;
 
     private string? errorMessage;
     private int? categoryId;
@@ -150,6 +168,7 @@ Next Subcategory ID: @nextSubCategoryId<br />
             var firstQuestionReview = ReviewData.FirstOrDefault(r => r.OrderIndex == 1);
             nextSubCategoryId = firstQuestionReview?.NextSubCategoryId;
             nextCategoryId = firstQuestionReview?.NextCategoryId;
+            isCategoryComplete = firstQuestionReview?.CurrentCategoryComplete;
         }
         catch (Exception ex)
         {
@@ -196,6 +215,15 @@ Next Subcategory ID: @nextSubCategoryId<br />
         }
 
         Navigation.NavigateTo($"/quiz/{nextSubCategoryId}");
+    }
+
+    private async Task GoToNextCategory() {
+        // Guard clause: if nextSubCategoryId is null or <= 0, do not navigate
+        if (nextCategoryId is null || nextCategoryId <= 0) {
+            return;
+        }
+
+        Navigation.NavigateTo($"/categories/{nextCategoryId}");
     }
 
     private IReadOnlyList<AnswerOptionViewModel> GetReviewAnswerOptions(QuestionReviewDto review)

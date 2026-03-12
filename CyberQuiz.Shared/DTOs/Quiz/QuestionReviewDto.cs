@@ -12,7 +12,7 @@ public class QuestionReviewDto
     public int OrderIndex { get; set; }
     public int NextSubCategoryId { get; set; }
     public int NextCategoryId { get; set; }
-    public bool allSubCategoriesCompleted { get; set; }
+    public bool CurrentCategoryComplete { get; set; }
 }
 
 public class AnswerOptionReviewDto

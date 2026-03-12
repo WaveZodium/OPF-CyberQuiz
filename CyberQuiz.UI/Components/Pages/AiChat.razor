@@ -1,16 +1,26 @@
 @page "/ai-chat"
 @rendermode InteractiveServer
+@using System.Net
 @using System.Net.Http.Json
 @using CyberQuiz.Shared.DTOs.AiChat
 @using CyberQuiz.UI.Services
 @inject IApiClient ApiClient
+@inject AiChatState ChatState
 
 <PageTitle>AI Chat</PageTitle>
 
 <AuthorizeView>
     <Authorized>
         <div class="ai-chat-page page-content">
-            <h3 class="mb-3">AI Chat</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">AI Chat</h3>
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        @onclick="ResetConversation"
+                        disabled="@isSending">
+                    Reset conversation
+                </button>
+            </div>
 
             @if (!string.IsNullOrWhiteSpace(errorMessage))
             {
@@ -19,14 +29,14 @@
 
             <div class="card mb-3">
                 <div class="card-body">
-                    @if (history.Count == 0)
+                    @if (History.Count == 0)
                     {
                         <div class="text-secondary small">No messages yet. Start a conversation.</div>
                     }
                     else
                     {
                         <div class="d-flex flex-column gap-2">
-                            @foreach (var chat in history)
+                            @foreach (var chat in History)
                             {
                                 var isUser = chat.Role.Equals("user", StringComparison.OrdinalIgnoreCase);
 
@@ -34,8 +44,19 @@
                                     <div class="border rounded p-2 @(isUser ? "bg-primary text-white" : "bg-light")" style="max-width: 80%;">
                                         <div class="small text-uppercase fw-semibold @(isUser ? "text-white-50" : "text-secondary")">
                                             @chat.Role
+                                            @if (chat.Timestamp != default)
+                                            {
+                                                <span class="ms-2 text-opacity-75">@FormatTimestamp(chat.Timestamp)</span>
+                                            }
                                         </div>
-                                        <div>@chat.Content</div>
+                                        @if (isUser)
+                                        {
+                                            <div>@chat.Content</div>
+                                        }
+                                        else
+                                        {
+                                            <div>@FormatChatReply(chat.Content)</div>
+                                        }
                                     </div>
                                 </div>
                             }
@@ -70,10 +91,11 @@
 </AuthorizeView>
 
 @code {
-    private readonly List<ChatMessageDto> history = [];
     private string message = string.Empty;
     private string? errorMessage;
     private bool isSending;
+
+    private List<ChatMessageDto> History => ChatState.History;
 
     private async Task SendMessageAsync()
     {
@@ -88,15 +110,16 @@
             var userMessage = new ChatMessageDto
             {
                 Role = "user",
-                Content = message.Trim()
+                Content = message.Trim(),
+                Timestamp = DateTimeOffset.Now
             };
 
-            history.Add(userMessage);
+            History.Add(userMessage);
 
             var request = new ChatRequestDto
             {
                 Message = userMessage.Content,
-                History = [.. history]
+                History = [.. History]
             };
 
             var response = await ApiClient.HttpClient.PostAsJsonAsync("api/ai/chat", request);
@@ -113,10 +136,11 @@
                 return;
             }
 
-            history.Add(new ChatMessageDto
+            History.Add(new ChatMessageDto
             {
                 Role = "assistant",
-                Content = chatResponse.Reply
+                Content = chatResponse.Reply,
+                Timestamp = DateTimeOffset.Now
             });
 
             message = string.Empty;
@@ -130,4 +154,24 @@
             isSending = false;
         }
     }
+
+    private void ResetConversation()
+    {
+        ChatState.Clear();
+        message = string.Empty;
+        errorMessage = null;
+    }
+
+    private static MarkupString FormatChatReply(string reply)
+    {
+        var encoded = WebUtility.HtmlEncode(reply);
+        var withBreaks = encoded
+            .Replace("\r\n", "\n")
+            .Replace("\n", "<br />");
+
+        return new MarkupString(withBreaks);
+    }
+
+    private static string FormatTimestamp(DateTimeOffset timestamp)
+        => timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 }

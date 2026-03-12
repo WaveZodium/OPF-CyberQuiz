@@ -15,6 +15,9 @@ namespace CyberQuiz.Shared.DTOs.AiChat
 
         //Content is the actual message text, for instance,  Content = "What is MFA?"
         public string Content { get; set; } = string.Empty;
+
+        //Timestamp for when the message was created (UI uses it for display)
+        public DateTimeOffset Timestamp { get; set; }
     }
 }
 

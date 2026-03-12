@@ -37,6 +37,7 @@ builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<CookieForwardingHandler>();
+builder.Services.AddScoped<AiChatState>();
 
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {

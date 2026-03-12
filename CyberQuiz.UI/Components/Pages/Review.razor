@@ -100,9 +100,19 @@
     <br />
 </div>
 
+<br />
+<br />
+<h4>Debug</h4>
+Next Category ID: @nextCategoryId<br/>
+Next Subcategory ID: @nextSubCategoryId<br />
+<br/>
+
 @code {
     [Parameter]
     public int subCategoryId { get; set; }
+
+    private int? nextCategoryId;
+    private int? nextSubCategoryId;
 
     private string? errorMessage;
     private int? categoryId;
@@ -135,12 +145,18 @@
             categoryId = categories
                 .FirstOrDefault(c => c.SubCategories.Any(sc => sc.Id == subCategoryId))
                 ?.Id;
+        
+            
+            nextSubCategoryId = ReviewData.FirstOrDefault(r => r.OrderIndex == 1)?.NextSubCategoryId;
+            //nextCategoryId = 
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
             ReviewData = null;
         }
+
+
     }
 
     private async Task ResetQuizAsync()
@@ -172,16 +188,13 @@
 
     private async Task GoToNextSubCategory()
     {
-        var nextSubCategory = ReviewData?
-            .FirstOrDefault(r => r.OrderIndex == 1)?
-            .NextSubCategoryId;
-
-        if (nextSubCategory is null || nextSubCategory <= 0)
+        // Guard clause: if nextSubCategoryId is null or <= 0, do not navigate
+        if (nextSubCategoryId is null || nextSubCategoryId <= 0)
         {
             return;
         }
 
-        Navigation.NavigateTo($"/quiz/{nextSubCategory}");
+        Navigation.NavigateTo($"/quiz/{nextSubCategoryId}");
     }
 
     private IReadOnlyList<AnswerOptionViewModel> GetReviewAnswerOptions(QuestionReviewDto review)

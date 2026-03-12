@@ -252,19 +252,25 @@ namespace CyberQuiz.Application.Services
                     AnswerOptions = answerOptionReviews,
                     IsCorrect = userResult.IsCorrect,
                     Explanation = question.Explanation,
-                    NextSubCategoryId = await DetermineNextSubCategoryId(subCategoryId)
+                    NextSubCategoryId = await DetermineNextSubCategoryId(subCategoryId, userId)
                 });
             }
 
             return reviewList;
         }
 
-        private async Task<int> DetermineNextSubCategoryId(int currentSubCategoryId)
+        private async Task<int> DetermineNextSubCategoryId(int currentSubCategoryId, string userId)
         {
-            // Gets the next subcategory in the same category based on the order index
-            var nextSubCategory = await _subCategoryRepo
+           // check if the user has reached 80% correct
+            var progress = await _progress.GetSubCategoryProgressAsync(currentSubCategoryId, userId);
+            
+            if (progress.PercentCorrect < 80)
+                return 0; // YOU SHALL NOT PASS! (to the next subcategory)
+        
+            var nextSubCategoryId = await _subCategoryRepo
                 .GetNextSubCategoryAsync(currentSubCategoryId);
-            return nextSubCategory ?? 0;
+            
+            return nextSubCategoryId ?? 0;
         }
 
         public async Task UpdateQuizResultAsync(

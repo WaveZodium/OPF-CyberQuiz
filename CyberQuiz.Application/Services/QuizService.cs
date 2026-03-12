@@ -19,6 +19,8 @@ namespace CyberQuiz.Application.Services
         private readonly IUserResultRepository _userResultRepo;
         private readonly IProgressCalculator _progress;
 
+        private bool _currentCategoryComplete; // Cache variable to store the completion status of the current category during review, to avoid redundant calculations for each question
+
         public QuizService(
             ICategoryRepository categoryRepo,
             ISubCategoryRepository subCategoryRepo,
@@ -247,7 +249,8 @@ namespace CyberQuiz.Application.Services
                     IsCorrect = userResult.IsCorrect,
                     Explanation = question.Explanation,
                     NextSubCategoryId = nextSubCategoryId,    
-                    NextCategoryId = nextCategoryId       
+                    NextCategoryId = nextCategoryId,
+                    CurrentCategoryComplete = _currentCategoryComplete // This can be calculated on the frontend based on the progress, or you can add it to the DTO if you prefer
                 });
             }
 
@@ -295,6 +298,8 @@ namespace CyberQuiz.Application.Services
 
             if (!allSubCategoriesCompleted)
                 return (0, 0);
+
+            _currentCategoryComplete = allSubCategoriesCompleted;
 
             // Try next category
             var allCategories = await _categoryRepo.GetAllCategoriesWithSubCategoriesAsync();

@@ -61,5 +61,24 @@ namespace CyberQuiz.Infrastructure.Repositories
         {
             return await _context.SubCategories.AnyAsync(sc => sc.Id == id);
         }
+
+        public async Task<int?> GetNextSubCategoryAsync(int currentSubCategoryId)
+        {
+            var currentSubCategory = await _context.SubCategories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(sc => sc.Id == currentSubCategoryId);
+
+            if (currentSubCategory == null)
+                return null;
+
+            var nextSubCategory = await _context.SubCategories
+                .Where(sc => sc.CategoryId == currentSubCategory.CategoryId 
+                          && sc.OrderIndex > currentSubCategory.OrderIndex)
+                .OrderBy(sc => sc.OrderIndex)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            return nextSubCategory?.Id;
+        }
     }
 }

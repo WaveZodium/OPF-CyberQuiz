@@ -14,5 +14,6 @@ namespace CyberQuiz.Infrastructure.Repositories
         Task UpdateAsync(SubCategory subCategory);
         Task DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
+        Task<int?> GetNextSubCategoryAsync(int currentSubCategoryId);
     }
 }
